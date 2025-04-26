@@ -1,16 +1,32 @@
-# renal_care_app
+# RenalCare App
 
-A new Flutter project.
+![Flutter](https://img.shields.io/badge/Flutter-3.29.2-blue?logo=flutter)
+![Dart](https://img.shields.io/badge/Dart-3.7.2-blue?logo=dart)
+![Firebase](https://img.shields.io/badge/Firebase-integrated-yellow?logo=firebase)
+![Platform](https://img.shields.io/badge/Platform-Android-brightgreen?logo=android)
+![License](https://img.shields.io/badge/License-Private-important)
 
-## Getting Started
+Aplicatie mobilă Flutter dedicată pacienților cu afecțiuni renale, care ajută la monitorizarea tratamentelor, programărilor medicale și a stării de sănătate zilnice.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 📱 Funcționalități principale
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Gestionarea programului de administrare a medicamentelor (notificări/alarme)
+- Evidența programărilor la medic și analize (calendar integrat)
+- Monitorizarea cantității de apă consumate zilnic
+- Sugestii de regim alimentar și rețete permise
+- Hartă interactivă pentru localizarea spitalelor din apropiere
+- Jurnal zilnic pentru simptome și starea de sănătate
+- Sistem de chat securizat medic-pacient
+- Vizualizarea analizelor și recomandărilor medicale
+- Autentificare securizată (Firebase Authentication)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🔥 Tehnologii folosite
+
+- **Flutter** (Dart)
+- **Firebase** (Authentication, Firestore, Cloud Messaging)
+- **Google Maps API** (pentru hartă)
+- **Twilio** (pentru alerte SMS, opțional)
