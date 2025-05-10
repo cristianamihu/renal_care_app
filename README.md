@@ -33,4 +33,4 @@ Aplicatie mobilă Flutter dedicată pacienților cu afecțiuni renale, care ajut
 - **Flutter** (Dart)
 - **Firebase** (Authentication, Firestore, Cloud Messaging)
 - **Google Maps API** (pentru hartă)
-- **Twilio** (pentru alerte SMS, opțional)
+- **Twilio** (pentru alerte SMS)
