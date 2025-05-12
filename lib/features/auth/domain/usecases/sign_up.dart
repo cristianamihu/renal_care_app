@@ -7,10 +7,16 @@ class SignUp {
   SignUp(this._repo);
 
   Future<User> call({
+    required String name,
     required String email,
     required String password,
     required UserRole role,
   }) {
-    return _repo.signUp(email: email, password: password, role: role);
+    return _repo.signUp(
+      name: name,
+      email: email,
+      password: password,
+      role: role,
+    );
   }
 }

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class HomePage extends StatefulWidget {
+import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
+
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, this.title = 'RenalCare home page'});
   final String title;
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   int _counter = 0;
 
   void _incrementCounter() {
@@ -17,12 +21,23 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> _handleLogout() async {
+    await ref.read(authViewModelProvider.notifier).signOut();
+    if (!mounted) return;
+    context.go(
+      '/login',
+    ); // context e this.context şi e valid pentru mounted check
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+        actions: [
+          IconButton(icon: const Icon(Icons.logout), onPressed: _handleLogout),
+        ],
       ),
 
       body: Center(

@@ -1,21 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:renal_care_app/core/theme/app_colors.dart';
+import 'package:renal_care_app/core/utils/validators.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_state.dart';
 import 'package:renal_care_app/features/auth/domain/entities/user.dart';
+import 'package:renal_care_app/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:renal_care_app/features/auth/presentation/widgets/gradient_button.dart';
+import 'package:renal_care_app/features/auth/presentation/widgets/social_button.dart';
+import 'package:renal_care_app/core/utils/name_text_formatter.dart';
 
 /// Provider locali pentru câmpurile de înregistrare
+final _regNameProvider = StateProvider<String>((_) => '');
 final _regEmailProvider = StateProvider<String>((_) => '');
 final _regPasswordProvider = StateProvider<String>((_) => '');
 final _regRoleProvider = StateProvider<UserRole>((_) => UserRole.patient);
 
-class RegisterScreen extends ConsumerWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
+  @override
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  bool _showPassword = false;
+  bool _submitted = false;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final name = ref.watch(_regNameProvider);
+    final email = ref.watch(_regEmailProvider);
+    final password = ref.watch(_regPasswordProvider);
+    final role = ref.watch(_regRoleProvider);
+
+    // Calculeaza erorile pe fiecare câmp
+    final nameError = Validators.notEmpty(name, 'Full Name');
+    final emailError = Validators.email(email);
+    final passwordError = Validators.password(password);
+
+    // Determinare dacă formularul e valid în ansamblu
+    final isFormValid =
+        nameError == null && emailError == null && passwordError == null;
+
     final authState = ref.watch(authViewModelProvider);
 
     // Ascultăm schimbările de stare și navigăm dacă autentificarea e OK
@@ -42,6 +70,7 @@ class RegisterScreen extends ConsumerWidget {
               ),
             ),
           ),
+
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -52,6 +81,7 @@ class RegisterScreen extends ConsumerWidget {
                   side: const BorderSide(color: AppColors.borderColor),
                 ),
                 elevation: 8,
+
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -66,66 +96,70 @@ class RegisterScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        style: const TextStyle(color: AppColors.whiteColor),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
-                            color: AppColors.whiteColor,
-                          ),
-                          labelText: 'Email',
-                          labelStyle: const TextStyle(
-                            color: AppColors.whiteColor,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: AppColors.borderColor,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteColor,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
+
+                      // field-ul pentru numele întreg
+                      AuthTextField(
+                        icon: Icons.person,
+                        label: 'Full Name',
+                        keyboardType: TextInputType.name,
+                        inputFormatters: [NameTextFormatter()],
+                        onChanged:
+                            (v) =>
+                                ref.read(_regNameProvider.notifier).state = v,
+                      ),
+                      if (_submitted && nameError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            nameError,
+                            style: const TextStyle(color: Colors.red),
                           ),
                         ),
+                      const SizedBox(height: 12),
+
+                      // field-ul pentru email
+                      AuthTextField(
+                        icon: Icons.email_outlined,
+                        label: 'Email',
+                        keyboardType: TextInputType.emailAddress,
                         onChanged:
                             (v) =>
                                 ref.read(_regEmailProvider.notifier).state = v,
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        style: const TextStyle(color: AppColors.whiteColor),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: AppColors.whiteColor,
-                          ),
-                          labelText: 'Password',
-                          labelStyle: const TextStyle(
-                            color: AppColors.whiteColor,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: AppColors.borderColor,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: AppColors.whiteColor,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
+                      if (_submitted && emailError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            emailError,
+                            style: const TextStyle(color: Colors.red),
                           ),
                         ),
-                        obscureText: true,
+                      const SizedBox(height: 12),
+
+                      // field-ul pentru parolă
+                      AuthTextField(
+                        icon: Icons.lock_outline,
+                        label: 'Password',
+                        obscure: !_showPassword,
+                        showToggle: true,
+                        onToggle:
+                            () =>
+                                setState(() => _showPassword = !_showPassword),
                         onChanged:
                             (v) =>
                                 ref.read(_regPasswordProvider.notifier).state =
                                     v,
                       ),
+                      if (_submitted && passwordError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            passwordError,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
                       const SizedBox(height: 12),
+
                       DropdownButtonFormField<UserRole>(
                         value: ref.watch(_regRoleProvider),
                         decoration: const InputDecoration(
@@ -148,36 +182,32 @@ class RegisterScreen extends ConsumerWidget {
                                 ref.read(_regRoleProvider.notifier).state = r!,
                       ),
                       const SizedBox(height: 24),
+
+                      // butonul pentru înregistrare
                       if (authState.status == AuthStatus.loading)
                         const CircularProgressIndicator(
                           color: AppColors.whiteColor,
                         )
                       else
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.gradient2,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
+                        GradientButton(
+                          text: 'REGISTER',
+                          onPressed: () {
+                            setState(() => _submitted = true);
+
+                            if (isFormValid) {
                               ref
                                   .read(authViewModelProvider.notifier)
                                   .signUp(
-                                    email: ref.read(_regEmailProvider),
-                                    password: ref.read(_regPasswordProvider),
-                                    role: ref.read(_regRoleProvider),
+                                    name: name,
+                                    email: email,
+                                    password: password,
+                                    role: role,
                                   );
-                            },
-                            child: const Text(
-                              'REGISTER',
-                              style: TextStyle(letterSpacing: 1.2),
-                            ),
-                          ),
+                            }
+                          },
                         ),
+
+                      //eroare de autentificare
                       if (authState.status == AuthStatus.error)
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
@@ -186,6 +216,22 @@ class RegisterScreen extends ConsumerWidget {
                             style: const TextStyle(color: Colors.red),
                           ),
                         ),
+
+                      const SizedBox(height: 16),
+                      const Divider(color: AppColors.whiteColor),
+                      const SizedBox(height: 16),
+
+                      // Google Sign-Up
+                      SocialButton(
+                        assetPath: 'assets/google_logo.jpg',
+                        text: 'Sign up with Google',
+                        onPressed: () {
+                          ref
+                              .read(authViewModelProvider.notifier)
+                              .signInWithGoogle();
+                        },
+                      ),
+
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: () => context.go('/login'),

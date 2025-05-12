@@ -10,6 +10,7 @@ abstract class AuthRepository {
 
   /// Înregistrare cont cu email și parolă
   Future<User> signUp({
+    required String name,
     required String email,
     required String password,
     required UserRole role,
