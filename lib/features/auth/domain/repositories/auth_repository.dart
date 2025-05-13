@@ -18,4 +18,14 @@ abstract class AuthRepository {
 
   /// Deconectare
   Future<void> signOut();
+
+  Future<User> updateProfile({
+    required String uid,
+    required String phone,
+    required String county,
+    required String city,
+    required String street,
+    required String houseNumber,
+    required DateTime dateOfBirth,
+  });
 }

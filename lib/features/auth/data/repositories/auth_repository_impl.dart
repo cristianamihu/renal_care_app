@@ -119,4 +119,31 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut() => _remote.signOut();
+
+  @override
+  Future<User> updateProfile({
+    required String uid,
+    required String phone,
+    required String county,
+    required String city,
+    required String street,
+    required String houseNumber,
+    required DateTime dateOfBirth,
+  }) async {
+    final ref = _firestore.collection('users').doc(uid);
+    final data = {
+      'phone': phone,
+      'county': county,
+      'city': city,
+      'street': street,
+      'houseNumber': houseNumber,
+      'dateOfBirth': Timestamp.fromDate(dateOfBirth),
+      'profileComplete': true,
+    };
+    await ref.update(data);
+
+    final doc = await ref.get();
+    final userModel = UserModel.fromDocument(doc);
+    return userModel.toEntity();
+  }
 }

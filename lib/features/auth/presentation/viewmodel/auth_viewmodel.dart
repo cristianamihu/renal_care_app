@@ -78,6 +78,11 @@ class AuthViewModel extends StateNotifier<AuthState> {
     await _signOut.call();
     state = const AuthState(); // revine la initial
   }
+
+  /// Setează manual noul user (după profil)
+  void setUser(User user) {
+    state = state.copyWith(user: user);
+  }
 }
 
 /// Provider global pentru AuthViewModel

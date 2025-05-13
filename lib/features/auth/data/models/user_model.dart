@@ -7,12 +7,26 @@ class UserModel {
   final String name;
   final String email;
   final String role;
+  final String? phone;
+  final String? county;
+  final String? city;
+  final String? street;
+  final String? houseNumber;
+  final Timestamp? dateOfBirth; // Firestore Timestamp
+  final bool profileComplete; // stocat ca bool în Firestore
 
   UserModel({
     required this.uid,
     required this.name,
     required this.email,
     required this.role,
+    this.phone,
+    this.county,
+    this.city,
+    this.street,
+    this.houseNumber,
+    this.dateOfBirth,
+    this.profileComplete = false,
   });
 
   /// Creează un UserModel dintr-un document Firestore
@@ -23,6 +37,13 @@ class UserModel {
       name: data['name'] as String,
       email: data['email'] as String,
       role: data['role'] as String,
+      phone: data['phone'] as String?,
+      county: data['county'],
+      city: data['city'],
+      street: data['street'],
+      houseNumber: data['houseNumber'],
+      dateOfBirth: data['dateOfBirth'] as Timestamp?,
+      profileComplete: data['profileComplete'] as bool? ?? false,
     );
   }
 
@@ -37,11 +58,34 @@ class UserModel {
   }
 
   /// Convertim în JSON pentru a salva în Firestore / API
-  Map<String, dynamic> toJson() => {'name': name, 'email': email, 'role': role};
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+    'role': role,
+    if (phone != null) 'phone': phone,
+    if (county != null) 'county': county,
+    if (city != null) 'city': city,
+    if (street != null) 'street': street,
+    if (houseNumber != null) 'houseNumber': houseNumber,
+    if (dateOfBirth != null) 'dateOfBirth': dateOfBirth,
+    'profileComplete': profileComplete,
+  };
 
   /// Convertim în entitatea de domain
   User toEntity() {
-    return User(uid: uid, name: name, email: email, role: role);
+    return User(
+      uid: uid,
+      name: name,
+      email: email,
+      role: role,
+      phone: phone,
+      county: county,
+      city: city,
+      street: street,
+      houseNumber: houseNumber,
+      dateOfBirth: dateOfBirth?.toDate(),
+      profileComplete: profileComplete,
+    );
   }
 
   /// Creează un UserModel din entitatea de domain (dacă ai nevoie)
@@ -51,6 +95,16 @@ class UserModel {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
+      county: user.county,
+      city: user.city,
+      street: user.street,
+      houseNumber: user.houseNumber,
+      dateOfBirth:
+          user.dateOfBirth != null
+              ? Timestamp.fromDate(user.dateOfBirth!)
+              : null,
+      profileComplete: user.profileComplete,
     );
   }
 }

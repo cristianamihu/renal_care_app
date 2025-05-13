@@ -8,6 +8,7 @@ import 'package:renal_care_app/features/auth/domain/usecases/sign_in.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_up.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_out.dart';
+import 'package:renal_care_app/features/auth/domain/usecases/update_profile.dart';
 
 /// Provider pentru instanța FirebaseAuth
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
@@ -42,4 +43,8 @@ final signUpUseCaseProvider = Provider<SignUp>((ref) {
 
 final signOutUseCaseProvider = Provider<SignOut>((ref) {
   return SignOut(ref.watch(authRepositoryProvider));
+});
+
+final updateProfileUseCaseProvider = Provider<UpdateProfile>((ref) {
+  return UpdateProfile(ref.watch(authRepositoryProvider));
 });
