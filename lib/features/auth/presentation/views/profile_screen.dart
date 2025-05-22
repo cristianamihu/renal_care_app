@@ -5,9 +5,9 @@ import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/core/utils/name_text_formatter.dart';
 import 'package:renal_care_app/core/utils/validators.dart';
 
-import 'package:renal_care_app/features/auth/presentation/viewmodel/profile_state.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/profile_viewmodel.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/profile_state.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/profile_viewmodel.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

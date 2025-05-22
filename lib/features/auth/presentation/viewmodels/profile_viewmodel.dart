@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:renal_care_app/core/di/auth_providers.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/update_profile.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/profile_state.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/profile_state.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 class ProfileViewModel extends StateNotifier<ProfileState> {
   final Ref _ref;

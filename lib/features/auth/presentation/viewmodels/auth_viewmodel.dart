@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:renal_care_app/features/auth/domain/usecases/sign_in.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_up.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_state.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 import 'package:renal_care_app/features/auth/domain/entities/user.dart';
 import 'package:renal_care_app/core/di/auth_providers.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_in_with_google.dart';

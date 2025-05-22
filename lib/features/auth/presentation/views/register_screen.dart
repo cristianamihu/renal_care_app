@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/core/utils/validators.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_state.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 import 'package:renal_care_app/features/auth/domain/entities/user.dart';
 import 'package:renal_care_app/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:renal_care_app/features/auth/presentation/widgets/gradient_button.dart';

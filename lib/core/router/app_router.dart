@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+
 import 'package:renal_care_app/features/auth/presentation/views/login_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/profile_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/register_screen.dart';
+import 'package:renal_care_app/features/chat/presentation/views/chat_room_list_screen.dart';
 import 'package:renal_care_app/features/home/presentation/views/home_screen.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_state.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodel/auth_viewmodel.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:renal_care_app/features/chat/presentation/views/chat_screen.dart';
 
 /// Un ChangeNotifier care notifică GoRouter când se schimbă starea de autentificare
 class _AuthChangeNotifier extends ChangeNotifier {
@@ -19,12 +22,21 @@ class _AuthChangeNotifier extends ChangeNotifier {
 }
 
 /// Un provider global de GoRouter
-final appRouterProvider = Provider<GoRouter>((ref) {
+final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
+  ref,
+  rootKey,
+) {
   // Cream notifier-ul care va reîmprospăta router-ul
   final authListenable = _AuthChangeNotifier(ref);
 
   return GoRouter(
+    navigatorKey: rootKey,
     initialLocation: '/login',
+    errorBuilder:
+        (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Page Not Found')),
+          body: Center(child: Text(state.error.toString())),
+        ),
     refreshListenable:
         authListenable, // se va re-evalua când authListenable schimbă starea
     // Rutele aplicației
@@ -39,6 +51,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         builder: (_, __) => const HomePage(title: 'RenalCare home page'),
       ),
+      GoRoute(
+        path: '/chat',
+        builder: (_, __) => const ChatRoomListScreen(),
+        routes: [
+          GoRoute(
+            path: ':roomId',
+            builder: (context, state) {
+              final roomId = state.pathParameters['roomId']!;
+              return ChatScreen(roomId: roomId);
+            },
+          ),
+        ],
+      ),
     ],
 
     // Logica de redirect în funcție de stare
@@ -49,6 +74,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final goingToProfile = state.uri.path == '/completeProfile';
       final goingToLogin =
           state.uri.path == '/login' || state.uri.path == '/register';
+
+      if (state.uri.path == '/') {
+        // redirect the bare "/" to your real home
+        return '/home';
+      }
 
       // Dacă nu ești logat și încerci să accesezi altceva decât login/register → du-l la /login
       if (!loggedIn && !goingToLogin) {
