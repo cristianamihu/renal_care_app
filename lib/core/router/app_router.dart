@@ -10,6 +10,7 @@ import 'package:renal_care_app/features/home/presentation/views/home_screen.dart
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/chat/presentation/views/chat_screen.dart';
+import 'package:renal_care_app/core/widgets/main_scaffold.dart';
 
 /// Un ChangeNotifier care notifică GoRouter când se schimbă starea de autentificare
 class _AuthChangeNotifier extends ChangeNotifier {
@@ -32,25 +33,30 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
   return GoRouter(
     navigatorKey: rootKey,
     initialLocation: '/login',
+    refreshListenable:
+        authListenable, // se va re-evalua când authListenable schimbă starea
     errorBuilder:
         (context, state) => Scaffold(
           appBar: AppBar(title: const Text('Page Not Found')),
           body: Center(child: Text(state.error.toString())),
         ),
-    refreshListenable:
-        authListenable, // se va re-evalua când authListenable schimbă starea
+
     // Rutele aplicației
     routes: [
+      // rutele publice
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(
         path: '/completeProfile',
         builder: (_, __) => const ProfileScreen(),
       ),
+
       GoRoute(
         path: '/home',
-        builder: (_, __) => const HomePage(title: 'RenalCare home page'),
+        builder: (_, __) => MainScaffold(child: const HomePage()),
       ),
+
+      // chat rămâne în afara bottom bar-ului
       GoRoute(
         path: '/chat',
         builder: (_, __) => const ChatRoomListScreen(),
