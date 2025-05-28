@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:renal_care_app/core/theme/app_colors.dart';
 
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/core/di/chat_providers.dart';
@@ -29,6 +30,21 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.gradient1,
+                  AppColors.gradient2,
+                  AppColors.gradient3,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
           leading: BackButton(onPressed: () => context.go('/home')),
           title: const Text('Messages'),
         ),

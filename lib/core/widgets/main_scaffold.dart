@@ -7,14 +7,16 @@ class MainScaffold extends StatelessWidget {
   const MainScaffold({required this.child, super.key});
 
   static const _tabs = <_TabItem>[
-    _TabItem(label: 'Today', icon: Icons.today, path: '/today'),
-    _TabItem(label: 'History', icon: Icons.bar_chart, path: '/history'),
+    _TabItem(label: 'Appointments', icon: Icons.event, path: '/appointments'),
+    _TabItem(label: 'Medication', icon: Icons.medication, path: '/medication'),
+    _TabItem(label: 'Journal', icon: Icons.note_alt, path: '/journal'),
     _TabItem(label: 'Home', icon: Icons.home, path: '/home'),
-    _TabItem(label: 'Cabinet', icon: Icons.medical_services, path: '/cabinet'),
-    _TabItem(label: 'More', icon: Icons.more_horiz, path: '/more'),
+    _TabItem(label: 'Aliments', icon: Icons.restaurant, path: '/aliments'),
+    _TabItem(label: 'Profile', icon: Icons.account_circle, path: '/profile'),
   ];
 
   int _locationToIndex(String location) {
+    if (location.startsWith('/emergency')) return -1;
     final idx = _tabs.indexWhere((t) => location.startsWith(t.path));
     return idx < 0 ? 2 : idx; // default Home daca nu găsește
   }
@@ -26,26 +28,31 @@ class MainScaffold extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.backgroundColor,
-        selectedItemColor: AppColors.gradient1,
-        unselectedItemColor: AppColors.whiteColor.withValues(alpha: 0.6),
-        currentIndex: currentIndex,
-        onTap: (i) {
-          if (i != currentIndex) {
-            context.go(_tabs[i].path);
-          }
-        },
-        items:
-            _tabs
-                .map(
-                  (t) => BottomNavigationBarItem(
-                    icon: Icon(t.icon),
-                    label: t.label,
-                  ),
-                )
-                .toList(),
-      ),
+      bottomNavigationBar:
+          currentIndex < 0
+              ? null
+              : BottomNavigationBar(
+                backgroundColor: AppColors.backgroundColor,
+                selectedItemColor: AppColors.gradient3,
+                unselectedItemColor: AppColors.whiteColor.withValues(
+                  alpha: 0.6,
+                ),
+                currentIndex: currentIndex,
+                onTap: (i) {
+                  if (i != currentIndex) {
+                    context.go(_tabs[i].path);
+                  }
+                },
+                items:
+                    _tabs
+                        .map(
+                          (t) => BottomNavigationBarItem(
+                            icon: Icon(t.icon),
+                            label: t.label,
+                          ),
+                        )
+                        .toList(),
+              ),
     );
   }
 }

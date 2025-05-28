@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
@@ -73,6 +74,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await initializeDateFormatting(
+    'ro',
+  ); // inițializează formatarea pentru limba română
+  await _initLocalNotifications(); // Initialize local notifications
 
   // cold-start handling: dacă aplicația a fost deschis din tap pe notificare
   final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
@@ -85,9 +90,6 @@ void main() async {
       });
     }
   }
-
-  // Initialize local notifications
-  await _initLocalNotifications();
 
   // Setează handler-ul pentru background
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);

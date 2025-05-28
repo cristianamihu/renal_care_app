@@ -12,8 +12,8 @@ class GradientButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.start = AppColors.gradient1,
-    this.end = AppColors.gradient2,
+    this.start = AppColors.gradient2,
+    this.end = AppColors.gradient3,
     this.width = 150,
   });
 

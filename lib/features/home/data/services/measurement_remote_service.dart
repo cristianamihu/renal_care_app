@@ -1,0 +1,86 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:renal_care_app/features/home/data/models/measurement_model.dart';
+import 'package:renal_care_app/features/home/data/models/water_intake_model.dart';
+import 'package:renal_care_app/features/home/data/models/sleep_record_model.dart';
+
+class MeasurementRemoteService {
+  final FirebaseFirestore _firestore;
+
+  MeasurementRemoteService({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  Future<MeasurementModel?> fetchLatestMeasurement(String uid) async {
+    final snap =
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('measurements')
+            .orderBy('date', descending: true)
+            .limit(1)
+            .get();
+    if (snap.docs.isEmpty) return null;
+    return MeasurementModel.fromJson(snap.docs.first.data());
+  }
+
+  Future<void> updateMeasurement(String uid, MeasurementModel model) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('measurements')
+        .doc(model.date.millisecondsSinceEpoch.toString())
+        .set(model.toJson());
+  }
+
+  Future<WaterIntakeModel> fetchTodayWater(String uid) async {
+    final todayKey = DateTime.now().toIso8601String().split('T').first;
+    final doc =
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('water')
+            .doc(todayKey)
+            .get();
+    if (!doc.exists) {
+      return WaterIntakeModel(date: Timestamp.now(), glasses: 0);
+    }
+    return WaterIntakeModel.fromJson(doc.data()!);
+  }
+
+  Future<void> saveTodayWater(String uid, WaterIntakeModel model) async {
+    final key = model.date.toDate().toIso8601String().split('T').first;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('water')
+        .doc(key)
+        .set(model.toJson());
+  }
+
+  Future<SleepRecordModel> fetchTodaySleep(String uid) async {
+    final todayKey = DateTime.now().toIso8601String().split('T').first;
+    final doc =
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('sleep')
+            .doc(todayKey)
+            .get();
+    if (!doc.exists) {
+      final nowTs = Timestamp.now();
+      // pentru default, pornim și terminăm la momentul apelului
+      return SleepRecordModel(date: nowTs, hours: 0, start: nowTs, end: nowTs);
+    }
+    return SleepRecordModel.fromJson(doc.data()!);
+  }
+
+  Future<void> saveTodaySleep(String uid, SleepRecordModel model) async {
+    final key = model.date.toDate().toIso8601String().split('T').first;
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('sleep')
+        .doc(key)
+        .set(model.toJson());
+  }
+}

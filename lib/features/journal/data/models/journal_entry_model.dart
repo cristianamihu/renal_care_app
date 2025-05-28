@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:renal_care_app/features/journal/domain/entities/journal_entry.dart';
+
 class JournalEntryModel {
   final String id;
   final String text;
@@ -30,4 +32,9 @@ class JournalEntryModel {
     'timestamp': Timestamp.fromDate(timestamp),
     'label': label,
   };
+
+  /// Convertim modelul la entitatea de domain
+  JournalEntry toEntity() {
+    return JournalEntry(id: id, text: text, timestamp: timestamp, label: label);
+  }
 }

@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
+import 'package:renal_care_app/core/theme/app_colors.dart';
 
 class MessageBubble extends StatefulWidget {
   final String text;
@@ -170,8 +171,7 @@ class _MessageBubbleState extends State<MessageBubble>
 
   @override
   Widget build(BuildContext context) {
-    final bgColor =
-        widget.isMe ? Theme.of(context).colorScheme.primary : Colors.grey[300];
+    final bgColor = widget.isMe ? AppColors.gradient3 : Colors.grey[300];
     final textColor = widget.isMe ? Colors.white : Colors.black87;
 
     return FadeTransition(

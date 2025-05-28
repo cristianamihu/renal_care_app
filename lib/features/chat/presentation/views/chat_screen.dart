@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
 
 import 'package:renal_care_app/core/di/chat_providers.dart';
+import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/chat/domain/entities/message.dart';
 import 'package:renal_care_app/features/chat/presentation/widgets/message_bubble.dart';
@@ -93,9 +94,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
+  // A helper that returns your tappable name widget:
+  Widget _buildProfileLink(String userId, {String? display}) {
+    return GestureDetector(
+      onTap: () => context.go('/profile/$userId'),
+      child: Text(
+        display ?? userId,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  }
+
   /// Construieste corpul ecranului de chat (lista + input)
   Widget _buildChatBody(AsyncValue<List<Message>> messagesAsync) {
     final uid = ref.read(authViewModelProvider).user!.uid;
+
     return Column(
       children: [
         Expanded(
@@ -129,6 +145,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                                   Navigator.of(ctx).pop(false),
                                           child: const Text('Anulează'),
                                         ),
+
                                         TextButton(
                                           onPressed:
                                               () => Navigator.of(ctx).pop(true),
@@ -180,6 +197,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             error: (e, _) => Center(child: Text('Eroare la mesaje: \$e')),
           ),
         ),
+
         const Divider(height: 1),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -189,10 +207,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 icon: const Icon(Icons.attach_file),
                 onPressed: _pickDocument,
               ),
+
               IconButton(
                 icon: const Icon(Icons.camera_alt),
                 onPressed: _pickImageFromCamera,
               ),
+
               Expanded(
                 child: TextField(
                   controller: _controller,
@@ -243,6 +263,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final roomAsync = ref.watch(chatRoomStreamProvider(widget.roomId));
     final messagesAsync = ref.watch(messagesProvider(widget.roomId));
+
     return PopScope<dynamic>(
       canPop: false, // prevent default pop
       onPopInvokedWithResult: (_, __) {
@@ -270,16 +291,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             error:
                 (e, _) => Scaffold(
                   appBar: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    flexibleSpace: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.gradient1,
+                            AppColors.gradient2,
+                            AppColors.gradient3,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
                     leading: BackButton(onPressed: () => context.go('/chat')),
-                    title: Text(otherUid),
+                    title: _buildProfileLink(otherUid),
                   ),
                   body: _buildChatBody(messagesAsync),
                 ),
             data:
                 (other) => Scaffold(
                   appBar: AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    flexibleSpace: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.gradient1,
+                            AppColors.gradient2,
+                            AppColors.gradient3,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
                     leading: BackButton(onPressed: () => context.go('/chat')),
-                    title: Text(other.name),
+                    title: _buildProfileLink(otherUid, display: other.name),
                   ),
                   body: _buildChatBody(messagesAsync),
                 ),
