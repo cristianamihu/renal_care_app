@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:renal_care_app/features/auth/data/models/measurement_document_model.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/data/services/measurement_remote_service.dart';
 import 'package:renal_care_app/features/home/data/repositories/measurement_repository_impl.dart';
 import 'package:renal_care_app/features/home/domain/repositories/measurement_repository.dart';
@@ -8,6 +12,7 @@ import 'package:renal_care_app/features/home/domain/usecases/get_sleep_history.d
 import 'package:renal_care_app/features/home/domain/usecases/update_measurement.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
+import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_state.dart';
 import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_viewmodel.dart';
 
 /// Remote service
@@ -49,7 +54,9 @@ final updateTodaySleepProvider = Provider<UpdateTodaySleep>((ref) {
 
 /// ViewModel
 final measurementViewModelProvider =
-    StateNotifierProvider<MeasurementViewModel, MeasurementState>((ref) {
+    StateNotifierProvider.autoDispose<MeasurementViewModel, MeasurementState>((
+      ref,
+    ) {
       return MeasurementViewModel(
         ref,
         ref.watch(getLatestMeasurementProvider),
@@ -59,4 +66,38 @@ final measurementViewModelProvider =
         ref.watch(getTodaySleepProvider),
         ref.watch(updateTodaySleepProvider),
       );
+    });
+
+final measurementDocsForUserProvider = StreamProvider.autoDispose
+    .family<List<MeasurementDocument>, String>((ref, userId) {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('measurement_documents')
+          .orderBy('addedAt', descending: true)
+          .snapshots()
+          .map(
+            (snap) =>
+                snap.docs.map((doc) {
+                  final data = doc.data();
+                  return MeasurementDocument(
+                    id: doc.id,
+                    name: data['name'] as String,
+                    url: data['url'] as String,
+                    addedAt: (data['addedAt'] as Timestamp).toDate(),
+                  );
+                }).toList(),
+          );
+    });
+
+/// Scurtătură pentru documentele de măsurări ale user-ului curent
+final measurementDocsProvider =
+    Provider.autoDispose<AsyncValue<List<MeasurementDocument>>>((ref) {
+      final authState = ref.watch(authViewModelProvider);
+      final uid = authState.user?.uid;
+      if (uid == null) {
+        // Dacă nu e niciun user logat, returnează un AsyncValue.data gol
+        return const AsyncValue.data(<MeasurementDocument>[]);
+      }
+      return ref.watch(measurementDocsForUserProvider(uid));
     });

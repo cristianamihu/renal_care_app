@@ -24,12 +24,15 @@ import 'package:renal_care_app/features/chat/domain/usecases/create_chat_room.da
 final chatRoomsStreamProvider = StreamProvider.autoDispose<List<ChatRoom>>((
   ref,
 ) {
-  // Ia UID-ul din starea de autentificare
-  final uid = ref.watch(authViewModelProvider).user!.uid;
-  // Ia instanţa de WatchChatRooms
+  // Ia obiectul User (poate fi null după logout)
+  final user = ref.watch(authViewModelProvider).user;
+  if (user == null) {
+    // dacă nu e autentificat, nu încercăm interogare Firebase → Stream gol
+    return const Stream<List<ChatRoom>>.empty();
+  }
+  // Dacă există user, întoarcem streamul propriu-zis
   final watchUC = ref.watch(watchChatRoomsUseCaseProvider);
-  // Apelează-o cu uid
-  return watchUC.call(uid);
+  return watchUC.call(user.uid);
 });
 
 /// Provider pentru FirebaseFirestore. Firestore singleton
@@ -37,7 +40,7 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   return FirebaseFirestore.instance;
 });
 
-/// Îţi aduce entitatea User după uid
+/// Îţi aduce entitatea User după uid (orice UI care afișează detaliile unui user)
 final userProvider = FutureProvider.family<User, String>((ref, uid) async {
   final doc =
       await ref.watch(firestoreProvider).collection('users').doc(uid).get();
@@ -45,20 +48,23 @@ final userProvider = FutureProvider.family<User, String>((ref, uid) async {
 });
 
 /// StreamProvider.family care expune lista de mesaje pentru un roomId
-final messagesProvider = StreamProvider.family<List<Message>, String>((
-  ref,
-  roomId,
-) {
-  final watchUC = ref.watch(watchMessagesUseCaseProvider);
-  return watchUC.call(roomId);
-});
+final messagesProvider = StreamProvider.autoDispose
+    .family<List<Message>, String>((ref, roomId) {
+      // Dacă user-ul nu e logat, nu returnăm nimic
+      final user = ref.watch(authViewModelProvider).user;
+      if (user == null) {
+        return const Stream<List<Message>>.empty();
+      }
+      final watchUC = ref.watch(watchMessagesUseCaseProvider);
+      return watchUC.call(roomId);
+    });
 
 // serviciul remote
 final chatRemoteServiceProvider = Provider<ChatRemoteService>((ref) {
   return ChatRemoteService(firestore: FirebaseFirestore.instance);
 });
 
-// repository
+// repository (impementarea interfaței)
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepositoryImpl(ref.watch(chatRemoteServiceProvider));
 });
@@ -87,38 +93,6 @@ final watchMessagesUseCaseProvider = Provider<WatchMessages>(
   (ref) => WatchMessages(ref.watch(chatRepositoryProvider)),
 );
 
-// Search patients (doctor only)
-final searchPatientsUseCaseProvider = Provider<SearchPatients>(
-  (ref) => SearchPatients(ref.watch(chatRepositoryProvider)),
-);
-
-/// Întoarce viitorul cu ultimul mesaj (sau null dacă nu există)
-final lastMessageProvider = FutureProvider.family<Message?, String>((
-  ref,
-  roomId,
-) {
-  final repo = ref.watch(chatRepositoryProvider);
-  return repo.getLastMessage(roomId);
-});
-
-/// Stream de ChatRoomWithRead (cu lastRead mereu actualizat)
-final chatRoomStreamProvider = StreamProvider.family<ChatRoomWithRead, String>((
-  ref,
-  roomId,
-) {
-  final firestore = ref.watch(firestoreProvider);
-  return firestore.collection('chat_rooms').doc(roomId).snapshots().map((doc) {
-    final room = ChatRoomModel.fromDocument(doc).toEntity();
-    final data = doc.data()!;
-    final raw = data['lastRead'] as Map<String, dynamic>? ?? {};
-    final lastRead = <String, DateTime>{};
-    raw.forEach((u, ts) {
-      if (ts is Timestamp) lastRead[u] = ts.toDate();
-    });
-    return ChatRoomWithRead(room: room, lastRead: lastRead);
-  });
-});
-
 final deleteMessageUseCaseProvider = Provider<DeleteMessage>(
   (ref) => DeleteMessage(ref.watch(chatRepositoryProvider)),
 );
@@ -127,21 +101,53 @@ final markRoomReadUseCaseProvider = Provider<MarkRoomRead>(
   (ref) => MarkRoomRead(ref.watch(chatRepositoryProvider)),
 );
 
+// Search patients (doctor only)
+final searchPatientsUseCaseProvider = Provider<SearchPatients>(
+  (ref) => SearchPatients(ref.watch(chatRepositoryProvider)),
+);
+
+/// Stream de ChatRoomWithRead (cu lastRead mereu actualizat)
+final chatRoomStreamProvider = StreamProvider.autoDispose
+    .family<ChatRoomWithRead, String>((ref, roomId) {
+      final user = ref.watch(authViewModelProvider).user;
+      if (user == null) {
+        return const Stream<ChatRoomWithRead>.empty();
+      }
+      final firestore = ref.watch(firestoreProvider);
+      return firestore.collection('chat_rooms').doc(roomId).snapshots().map((
+        doc,
+      ) {
+        final room = ChatRoomModel.fromDocument(doc).toEntity();
+        final data = doc.data()!;
+        final raw = data['lastRead'] as Map<String, dynamic>? ?? {};
+        final lastRead = <String, DateTime>{};
+        raw.forEach((u, ts) {
+          if (ts is Timestamp) lastRead[u] = ts.toDate();
+        });
+        return ChatRoomWithRead(room: room, lastRead: lastRead);
+      });
+    });
+
 final unreadCountProvider = Provider.family<int, String>((ref, roomId) {
-  final me = ref.watch(authViewModelProvider).user!.uid;
+  final user = ref.watch(authViewModelProvider).user;
+  if (user == null) return 0;
+  final me = user.uid;
 
-  // ia lista de mesaje (ultima valoare)
   final msgs = ref.watch(messagesProvider(roomId)).value ?? [];
-
-  // ia ultima valoare de lastRead din stream (sau null dacă încă nu a venit)
   final roomWithRead = ref
       .watch(chatRoomStreamProvider(roomId))
       .maybeWhen(data: (r) => r, orElse: () => null);
-
-  // dacă n-ai încă lastRead, considerăm că nu ai citit nimic
   final lastRead =
       roomWithRead?.lastRead[me] ?? DateTime.fromMillisecondsSinceEpoch(0);
 
-  // numărăm doar mesajele cu timestamp > lastRead
   return msgs.where((m) => m.timestamp.isAfter(lastRead)).length;
+});
+
+/// Întoarce viitorul cu ultimul mesaj (sau null dacă nu există)
+final lastMessageProvider = FutureProvider.family<Message?, String>((
+  ref,
+  roomId,
+) {
+  final repo = ref.watch(chatRepositoryProvider);
+  return repo.getLastMessage(roomId);
 });

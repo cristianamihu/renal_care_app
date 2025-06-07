@@ -30,6 +30,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
       diastolic: m.diastolic,
       temperature: m.temperature,
       date: Timestamp.fromDate(m.date),
+      moment: m.moment,
     );
     await _remote.updateMeasurement(uid, model);
   }

@@ -49,7 +49,7 @@ class _PatientSearchBarState extends ConsumerState<PatientSearchBar> {
         TextField(
           controller: _searchController,
           decoration: InputDecoration(
-            labelText: 'Caută pacient (email)',
+            labelText: 'Search for patient (email)',
             suffixIcon: IconButton(
               icon: const Icon(Icons.search),
               onPressed: _search,

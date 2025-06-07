@@ -18,48 +18,99 @@ class JournalRemoteService {
         .map((snap) => snap.docs.map(JournalEntryModel.fromDocument).toList());
   }
 
+  // creează jurnal + creează duplicatul în journal_documents
   Future<void> addEntry({
     required String userId,
     required String text,
     required String label,
-  }) {
+  }) async {
     final col = _firestore
         .collection('users')
         .doc(userId)
         .collection('journal');
+    // generează un id nou pentru jurnal
+    final newDocRef = col.doc();
+    final entryId = newDocRef.id;
+
+    final now = DateTime.now();
     final entry = JournalEntryModel(
-      id: col.doc().id,
+      id: entryId,
       text: text,
-      timestamp: DateTime.now(),
+      timestamp: now,
       label: label,
     );
-    return col.doc(entry.id).set(entry.toJson());
+    // Scrie în /users/{uid}/journal/{entryId}
+    await newDocRef.set(entry.toJson());
+    // Scrie simultan în /users/{uid}/journal_documents/{entryId}
+    final docCopy = {
+      'name': 'Note: $label',
+      'content': text, // stocare tocmai textul notei
+      'type': 'text/plain',
+      'addedAt': Timestamp.fromDate(now),
+    };
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('journal_documents')
+        .doc(entryId)
+        .set(docCopy);
   }
 
+  // actualizează atât în journal, cât și în journal_documents
   Future<void> updateEntry({
     required String userId,
     required String entryId,
     required String text,
     required String label,
-  }) {
-    return _firestore
+  }) async {
+    final journalRef = _firestore
         .collection('users')
         .doc(userId)
         .collection('journal')
-        .doc(entryId)
-        .update({
-          'text': text,
-          'label': label,
-          'timestamp': Timestamp.fromDate(DateTime.now()),
-        });
+        .doc(entryId);
+    final now = DateTime.now();
+
+    // Actualizează în /users/{uid}/journal/{entryId}
+    await journalRef.update({
+      'text': text,
+      'label': label,
+      'timestamp': Timestamp.fromDate(now),
+    });
+
+    // Actualizează și în /users/{uid}/journal_documents/{entryId}
+    final docRefCopy = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('journal_documents')
+        .doc(entryId);
+
+    await docRefCopy.update({
+      'name': 'Note: $label',
+      'content': text,
+      'addedAt': Timestamp.fromDate(now),
+      // Păstrăm type = 'text/plain'
+    });
   }
 
-  Future<void> deleteEntry({required String userId, required String entryId}) {
-    return _firestore
+  // șterge atât din journal, cât și din journal_documents
+  Future<void> deleteEntry({
+    required String userId,
+    required String entryId,
+  }) async {
+    final journalRef = _firestore
         .collection('users')
         .doc(userId)
         .collection('journal')
-        .doc(entryId)
-        .delete();
+        .doc(entryId);
+    final docRefCopy = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('journal_documents')
+        .doc(entryId);
+
+    // Șterge din jurnal
+    await journalRef.delete();
+    // Șterge și din journal_documents
+    await docRefCopy.delete();
   }
 }

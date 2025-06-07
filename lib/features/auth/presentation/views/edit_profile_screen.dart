@@ -29,6 +29,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Preluăm datele actuale din AuthViewModel și le punem în controloare
     final user = ref.read(authViewModelProvider).user!;
     _phoneCtrl = TextEditingController(text: user.phone);
     _countyCtrl = TextEditingController(text: user.county);
@@ -50,14 +52,36 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profileState = ref.watch(profileViewModelProvider);
-
-    ref.listen<ProfileState>(profileViewModelProvider, (prev, next) {
+    // Ascultăm o singură dată ProfileState. Când devine "success", navigăm înapoi:
+    ref.listen<ProfileState>(profileViewModelProvider, (previous, next) {
       if (next.status == ProfileStatus.success) {
-        // după edit, merg înapoi pe profil
-        context.go('/profile');
+        // Afișăm un SnackBar cu confirmare
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profil actualizat cu succes!'),
+              duration: Duration(milliseconds: 800),
+            ),
+          );
+        }
+        // Ieşim din ecranul de edit (poate fi și context.go('/profile') dacă vrei să ștergi complet ruta)
+        if (mounted) context.go('/profile');
+      }
+
+      if (next.status == ProfileStatus.error) {
+        // Dacă a apărut o eroare, o afișăm
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving: ${next.errorMessage}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     });
+
+    final profileState = ref.watch(profileViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +103,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         title: const Text('Edit Profile'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.go('/profile'),
+          onPressed: () => context.pop(), // Întoarcere manuală
         ),
       ),
 
@@ -198,7 +222,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
 
                         onPressed: () {
+                          // Validare formular
                           if (_formKey.currentState!.validate()) {
+                            // Trimitem update‐ul
                             ref
                                 .read(profileViewModelProvider.notifier)
                                 .submit(

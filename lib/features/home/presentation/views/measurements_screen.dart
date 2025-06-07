@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
-import 'package:renal_care_app/core/di/measurement_providers.dart';
+import 'package:renal_care_app/core/di/measurements_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/presentation/views/add_measurement_screen.dart';
@@ -181,10 +181,11 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
 
                           Text(
                             state.measurement != null
-                                ? 'BMI: ${state.measurement!.bmi.toStringAsFixed(1)}\n'
-                                    'Weight: ${state.measurement!.weight}kg,'
+                                ? '${state.measurement!.moment}\n'
+                                    'BMI: ${state.measurement!.bmi.toStringAsFixed(1)}\n'
+                                    'Weight: ${state.measurement!.weight}kg, '
                                     'Height: ${state.measurement!.height}cm\n'
-                                    'Glucose: ${state.measurement!.glucose},'
+                                    'Glucose: ${state.measurement!.glucose}, '
                                     'Blood Preasure: ${state.measurement!.systolic}/${state.measurement!.diastolic}\n'
                                     'Temperature: ${state.measurement!.temperature.toStringAsFixed(1)}°C'
                                 : 'Tap to enter',
@@ -362,7 +363,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                     state.sleepStart != null &&
                                             state.sleepEnd != null
                                         ? Text(
-                                          '${_formatTime(state.sleepStart!)} – ${_formatTime(state.sleepEnd!)}',
+                                          '${_formatTime(state.sleepStart!)} - ${_formatTime(state.sleepEnd!)}',
                                           style: const TextStyle(fontSize: 16),
                                         )
                                         : const Text(

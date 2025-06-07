@@ -50,7 +50,7 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
                 // numărul de telefon
                 TextFormField(
                   decoration: const InputDecoration(
-                    labelText: 'Phone numebr',
+                    labelText: 'Phone number',
                     prefixIcon: Icon(Icons.phone),
                   ),
                   keyboardType: TextInputType.phone,

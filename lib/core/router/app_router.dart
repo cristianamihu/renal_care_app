@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+
+import 'package:renal_care_app/core/di/medication_provider.dart';
 import 'package:renal_care_app/core/widgets/main_scaffold.dart';
 import 'package:renal_care_app/features/auth/presentation/views/edit_profile_screen.dart';
-
+import 'package:renal_care_app/features/auth/presentation/views/journal_documents_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/login_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/complete_profile_screen.dart';
+import 'package:renal_care_app/features/auth/presentation/views/measurement_documents_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/profile_detail_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/register_screen.dart';
+import 'package:renal_care_app/features/auth/presentation/views/saved_documents_screen.dart';
 import 'package:renal_care_app/features/chat/presentation/views/chat_room_list_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -15,6 +19,8 @@ import 'package:renal_care_app/features/chat/presentation/views/chat_screen.dart
 import 'package:renal_care_app/features/emergency/presentation/views/emergency_screen.dart';
 import 'package:renal_care_app/features/journal/presentation/views/journal_list_screen.dart';
 import 'package:renal_care_app/features/home/presentation/views/measurements_screen.dart';
+import 'package:renal_care_app/features/medications/presentation/views/add_edit_medication_screen.dart';
+import 'package:renal_care_app/features/medications/presentation/views/medications_screen.dart';
 
 /// Un ChangeNotifier care notifică GoRouter când se schimbă starea de autentificare
 class _AuthChangeNotifier extends ChangeNotifier {
@@ -59,12 +65,40 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
         path: '/editProfile',
         builder: (_, __) => const EditProfileScreen(),
       ),
+
       GoRoute(path: '/emergency', builder: (_, __) => const EmergencyPage()),
 
       // Profilul user-ului
       GoRoute(
         path: '/profile',
         builder: (_, __) => MainScaffold(child: const ProfileDetailScreen()),
+      ),
+
+      //documentele jurnal
+      GoRoute(
+        path: '/profile/:userId/journalDocs',
+        builder: (context, state) {
+          final otherUid = state.pathParameters['userId']!;
+          return JournalDocumentsScreen(userId: otherUid, canDelete: false);
+        },
+      ),
+
+      //documentele de masurători
+      GoRoute(
+        path: '/profile/:userId/measurementDocs',
+        builder: (context, state) {
+          final otherUid = state.pathParameters['userId']!;
+          return MeasurementDocumentsScreen(userId: otherUid, canDelete: false);
+        },
+      ),
+
+      //documentele salvate
+      GoRoute(
+        path: '/profile/:userId/savedDocs',
+        builder: (context, state) {
+          final otherUid = state.pathParameters['userId']!;
+          return SavedDocumentsScreen(userId: otherUid, canDelete: false);
+        },
       ),
 
       // profilul oricărui alt user
@@ -85,6 +119,41 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
       GoRoute(
         path: '/journal',
         builder: (_, __) => MainScaffold(child: const JournalListScreen()),
+      ),
+
+      // Listare medicamente
+      GoRoute(
+        path: '/medications',
+        builder: (_, __) => MainScaffold(child: const MedicationsScreen()),
+      ),
+
+      // Adaugă medicament
+      GoRoute(
+        path: '/medications/add',
+        builder:
+            (_, __) => MainScaffold(child: const AddEditMedicationScreen()),
+      ),
+
+      // Editare medicament
+      GoRoute(
+        path: '/medications/edit/:medId',
+        builder: (context, state) {
+          final medId = state.pathParameters['medId']!;
+          return MainScaffold(
+            child: Consumer(
+              builder: (ctx, ref, _) {
+                final asyncMed = ref.watch(singleMedicationProvider(medId));
+                return asyncMed.when(
+                  data:
+                      (med) => AddEditMedicationScreen(initialMedication: med),
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Eroare: $e')),
+                );
+              },
+            ),
+          );
+        },
       ),
 
       // Mesagerie

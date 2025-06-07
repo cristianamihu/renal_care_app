@@ -7,6 +7,7 @@ class Measurement {
   final int diastolic; //mmHg
   final double temperature; // °C
   final DateTime date;
+  final String moment; // momentul zilei (ex: "Dimineața", "După prânz" etc.)
 
   Measurement({
     required this.weight,
@@ -17,5 +18,6 @@ class Measurement {
     required this.diastolic,
     required this.temperature,
     required this.date,
+    required this.moment,
   });
 }

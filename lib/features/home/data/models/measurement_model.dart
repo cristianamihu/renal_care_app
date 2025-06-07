@@ -11,6 +11,7 @@ class MeasurementModel {
   final int diastolic;
   final double temperature;
   final Timestamp date;
+  final String moment;
 
   MeasurementModel({
     required this.weight,
@@ -21,6 +22,7 @@ class MeasurementModel {
     required this.diastolic,
     required this.temperature,
     required this.date,
+    required this.moment,
   });
 
   factory MeasurementModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class MeasurementModel {
       diastolic: json['diastolic'] as int,
       temperature: (json['temperature'] as num?)?.toDouble() ?? 0.0,
       date: dateField is Timestamp ? dateField : Timestamp.now(),
+      moment: (json['moment'] as String?) ?? '',
     );
   }
 
@@ -46,6 +49,7 @@ class MeasurementModel {
     'diastolic': diastolic,
     'temperature': temperature,
     'date': date,
+    'moment': moment,
   };
 
   Measurement toEntity() => Measurement(
@@ -57,5 +61,6 @@ class MeasurementModel {
     diastolic: diastolic,
     temperature: temperature,
     date: date.toDate(),
+    moment: moment,
   );
 }

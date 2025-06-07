@@ -8,10 +8,10 @@ class MainScaffold extends StatelessWidget {
 
   static const _tabs = <_TabItem>[
     _TabItem(label: 'Appointments', icon: Icons.event, path: '/appointments'),
-    _TabItem(label: 'Medication', icon: Icons.medication, path: '/medication'),
-    _TabItem(label: 'Journal', icon: Icons.note_alt, path: '/journal'),
+    _TabItem(label: 'Medication', icon: Icons.medication, path: '/medications'),
     _TabItem(label: 'Home', icon: Icons.home, path: '/home'),
-    _TabItem(label: 'Aliments', icon: Icons.restaurant, path: '/aliments'),
+    _TabItem(label: 'Journal', icon: Icons.note_alt, path: '/journal'),
+    //_TabItem(label: 'Aliments', icon: Icons.restaurant, path: '/aliments'),
     _TabItem(label: 'Profile', icon: Icons.account_circle, path: '/profile'),
   ];
 

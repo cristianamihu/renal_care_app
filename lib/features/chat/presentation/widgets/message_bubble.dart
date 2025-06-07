@@ -1,20 +1,25 @@
 import 'dart:io';
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
-import 'package:renal_care_app/core/theme/app_colors.dart';
+import 'package:renal_care_app/core/di/chat_providers.dart';
 
-class MessageBubble extends StatefulWidget {
+import 'package:renal_care_app/core/theme/app_colors.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+
+class MessageBubble extends ConsumerStatefulWidget {
   final String text;
   final bool isMe;
   final DateTime timestamp;
   final String? attachmentUrl;
   final String? attachmentName;
-  final String? attachmentType;
+  final String? attachmentType; // mime-type
   final VoidCallback? onDelete;
 
   const MessageBubble({
@@ -29,10 +34,10 @@ class MessageBubble extends StatefulWidget {
   });
 
   @override
-  State<MessageBubble> createState() => _MessageBubbleState();
+  ConsumerState<MessageBubble> createState() => _MessageBubbleState();
 }
 
-class _MessageBubbleState extends State<MessageBubble>
+class _MessageBubbleState extends ConsumerState<MessageBubble>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
@@ -54,6 +59,7 @@ class _MessageBubbleState extends State<MessageBubble>
     super.dispose();
   }
 
+  /// Descarcă fișierul în folderul Download/RenalCare din Android
   Future<void> _saveToRenalCare(String url, String filename) async {
     // creează folderul Download/RenalCare dacă nu există
     final renalDir = Directory('/storage/emulated/0/Download/RenalCare');
@@ -79,8 +85,13 @@ class _MessageBubbleState extends State<MessageBubble>
     }
   }
 
-  // Afișează bottom-sheet cu opțiuni „Deschide” sau „Salvează” pentru document
-  void _showAttachmentOptions(BuildContext ctx, String url, String filename) {
+  // Afișează bottom-sheet cu opțiuni „Deschide”, "Adaugă în profilȚ" sau „Salvează” pentru un document
+  void _showAttachmentOptions(
+    BuildContext ctx,
+    String url,
+    String filename,
+    String mimeType,
+  ) {
     showModalBottomSheet(
       context: ctx,
       builder:
@@ -96,6 +107,7 @@ class _MessageBubbleState extends State<MessageBubble>
                     _openDocument(url);
                   },
                 ),
+
                 ListTile(
                   leading: const Icon(Icons.download),
                   title: const Text('Salvează'),
@@ -105,6 +117,15 @@ class _MessageBubbleState extends State<MessageBubble>
                       url,
                       widget.attachmentName ?? p.basename(url),
                     );
+                  },
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.person_add_alt_1),
+                  title: const Text('Adaugă în profil'),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _addToProfile(url: url, name: filename, type: mimeType);
                   },
                 ),
               ],
@@ -124,8 +145,55 @@ class _MessageBubbleState extends State<MessageBubble>
     await OpenFile.open(localPath);
   }
 
-  /// Afișează imaginea fullscreen și permite salvarea ei
-  void _showImageViewer(String imageUrl) {
+  /// Salvează metadatele și URL-ul fișierului în colecția
+  /// `users/{uid}/profile_documents/{docId}` din Firestore.
+  Future<void> _addToProfile({
+    required String url,
+    required String name,
+    required String type,
+  }) async {
+    // Obținem user-ul curent din authViewModelProvider
+    final authState = ref.read(authViewModelProvider);
+    final currentUser = authState.user;
+    if (currentUser == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Trebuie să fii autentificat ca să salvezi în profil'),
+        ),
+      );
+      return;
+    }
+
+    final uid = currentUser.uid;
+    try {
+      final firestore = ref.read(firestoreProvider);
+      await firestore
+          .collection('users')
+          .doc(uid)
+          .collection('profile_documents')
+          .doc()
+          .set({
+            'name': name,
+            'url': url,
+            'type': type,
+            'addedAt': FieldValue.serverTimestamp(),
+          });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fișier adăugat în profil cu succes')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Eroare la salvarea în profil: $e')),
+      );
+    }
+  }
+
+  /// Afișează imaginea fullscreen și permite salvarea ei și adăugarea în profil
+  void _showImageViewer(String imageUrl, String imageName, String mimeType) {
     showDialog(
       context: context,
       builder:
@@ -137,6 +205,8 @@ class _MessageBubbleState extends State<MessageBubble>
                 Center(
                   child: Hero(tag: imageUrl, child: Image.network(imageUrl)),
                 ),
+
+                // buton „Salvează” în colțul dreapta-sus
                 Positioned(
                   top: 24,
                   right: 24,
@@ -148,7 +218,25 @@ class _MessageBubbleState extends State<MessageBubble>
                       _saveToRenalCare(
                         imageUrl,
                         widget.attachmentName ?? p.basename(imageUrl),
-                      ); //salvează imaginea
+                      );
+                    },
+                  ),
+                ),
+
+                // buton de de adăugare în profil
+                Positioned(
+                  top: 24,
+                  right: 80,
+                  child: IconButton(
+                    icon: const Icon(Icons.person_add_alt_1, size: 28),
+                    color: Colors.white,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _addToProfile(
+                        url: imageUrl,
+                        name: imageName,
+                        type: mimeType,
+                      );
                     },
                   ),
                 ),
@@ -206,14 +294,20 @@ class _MessageBubbleState extends State<MessageBubble>
                 if (widget.text.isNotEmpty)
                   Text(widget.text, style: TextStyle(color: textColor)),
 
-                // Atașament: imagine sau document
+                // Dacă există un atașament (URL)
                 if (widget.attachmentUrl != null) ...[
                   const SizedBox(height: 8),
 
                   // Dacă e imagine, afișăm thumbnail și la tap deschidem fullscreen
                   if (widget.attachmentType?.startsWith('image/') == true)
                     GestureDetector(
-                      onTap: () => _showImageViewer(widget.attachmentUrl!),
+                      onTap:
+                          () => _showImageViewer(
+                            widget.attachmentUrl!,
+                            widget.attachmentName ??
+                                p.basename(widget.attachmentUrl!),
+                            widget.attachmentType!,
+                          ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -233,6 +327,7 @@ class _MessageBubbleState extends State<MessageBubble>
                             widget.attachmentUrl!,
                             widget.attachmentName ??
                                 p.basename(widget.attachmentUrl!),
+                            widget.attachmentType ?? 'application/octet-stream',
                           ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -268,7 +363,7 @@ class _MessageBubbleState extends State<MessageBubble>
             ),
           ),
 
-          // ICONUL DE ȘTERGERE (apare doar dacă onDelete nu e null)
+          // Iconul de ștergere (apare doar dacă onDelete nu e null)
           if (widget.onDelete != null)
             Positioned(
               top: 0,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
 import 'package:renal_care_app/features/home/domain/entities/water_intake.dart';
@@ -10,50 +11,7 @@ import 'package:renal_care_app/features/home/domain/usecases/update_measurement.
 import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
-
-class MeasurementState {
-  final Measurement? measurement;
-  final WaterIntake water;
-  final SleepRecord sleep;
-  final bool loading;
-  final String? error;
-  final int waterGoalMl;
-  final int glassSizeMl;
-  final DateTime? sleepStart;
-  final DateTime? sleepEnd;
-
-  MeasurementState({
-    this.measurement,
-    required this.water,
-    required this.sleep,
-    this.loading = false,
-    this.error,
-    this.waterGoalMl = 2000,
-    this.glassSizeMl = 200,
-    this.sleepStart,
-    this.sleepEnd,
-  });
-
-  MeasurementState copyWith({
-    Measurement? measurement,
-    WaterIntake? water,
-    SleepRecord? sleep,
-    bool? loading,
-    String? error,
-    int? waterGoalMl,
-    int? glassSizeMl,
-    DateTime? sleepStart,
-    DateTime? sleepEnd,
-  }) => MeasurementState(
-    measurement: measurement ?? this.measurement,
-    water: water ?? this.water,
-    sleep: sleep ?? this.sleep,
-    loading: loading ?? this.loading,
-    error: error,
-    sleepStart: sleepStart ?? this.sleepStart,
-    sleepEnd: sleepEnd ?? this.sleepEnd,
-  );
-}
+import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_state.dart';
 
 class MeasurementViewModel extends StateNotifier<MeasurementState> {
   final Ref _ref;
@@ -83,12 +41,24 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
           ),
         ),
       ) {
+    // Ascultăm schimbarea autentificării
+    _ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      final oldUid = previous?.user?.uid;
+      final newUid = next.user?.uid;
+      if (oldUid != newUid) {
+        // Dacă s‐a schimbat UID‐ul (login/logout/substituire), reîncarcă TOATE datele:
+        _loadAll();
+      }
+    });
+    // Încarcă inițial pentru UID-ul actual (dacă există)
     _loadAll();
   }
 
   Future<void> _loadAll() async {
     state = state.copyWith(loading: true);
+
     final uid = _ref.read(authViewModelProvider).user!.uid;
+
     try {
       final measurement = await _getMeasurement(uid);
       final water = await _getWater(uid);
@@ -106,19 +76,19 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
     }
   }
 
-  Future<void> saveMeasurement(Measurement m) async {
-    state = state.copyWith(loading: true);
-    final uid = _ref.read(authViewModelProvider).user!.uid;
-    await _updateMeasurement(uid, m);
-    state = state.copyWith(measurement: m, loading: false);
-  }
-
   Future<void> addGlass() async {
     final uid = _ref.read(authViewModelProvider).user!.uid;
     final today = DateTime.now();
     final newWater = WaterIntake(date: today, glasses: state.water.glasses + 1);
     await _updateWater(uid, newWater);
     state = state.copyWith(water: newWater);
+  }
+
+  Future<void> saveMeasurement(Measurement m) async {
+    state = state.copyWith(loading: true);
+    final uid = _ref.read(authViewModelProvider).user!.uid;
+    await _updateMeasurement(uid, m);
+    state = state.copyWith(measurement: m, loading: false);
   }
 
   Future<void> setSleep(double hours) async {

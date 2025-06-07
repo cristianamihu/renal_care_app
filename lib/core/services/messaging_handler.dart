@@ -1,11 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
-import 'package:renal_care_app/core/di/chat_providers.dart';
+import 'package:renal_care_app/core/utils/fcm_helper.dart';
 
 class MessagingHandler extends ConsumerStatefulWidget {
   final Widget child;
@@ -31,21 +34,37 @@ class _MessagingHandlerState extends ConsumerState<MessagingHandler> {
     _listenOnTap();
   }
 
-  void _requestPermissions() {
-    FirebaseMessaging.instance.requestPermission();
+  Future<void> _requestPermissions() async {
+    // Firebase Messaging (iOS + Android)
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+
+    // Android 13+ notifications runtime permission
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (status.isDenied || status.isRestricted) {
+        final newStatus = await Permission.notification.request();
+        if (newStatus.isPermanentlyDenied) {
+          // Deschide setările aplicației ca user-ul să poată activa manual permisiunea
+          await openAppSettings();
+        }
+      }
+    }
   }
 
   void _saveTokenToFirestore() async {
-    final token = await FirebaseMessaging.instance.getToken();
     final uid = ref.read(authViewModelProvider).user?.uid;
-    if (uid != null && token != null) {
-      // actualizează token-ul în Firestore
-      await ref.read(firestoreProvider).collection('users').doc(uid).update({
-        'fcmToken': token,
-      });
+    if (uid != null) {
+      // În loc să scriem în câmpul fcmToken, apelăm helper-ul care
+      // face exact ceea ce ne trebuie: cere token și îl pune în subcolecție.
+      await FCMHelper.initFCM(uid);
     }
-    // Afişare token-ul pentru debug
-    debugPrint('FCM token: $token');
   }
 
   void _listenForeground() {

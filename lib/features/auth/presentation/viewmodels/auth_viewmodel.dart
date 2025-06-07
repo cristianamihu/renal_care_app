@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:renal_care_app/features/auth/data/models/user_model.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_in.dart';
 import 'package:renal_care_app/features/auth/domain/usecases/sign_up.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
@@ -20,7 +23,41 @@ class AuthViewModel extends StateNotifier<AuthState> {
     this._signUp,
     this._signInWithGoogle,
     this._signOut,
-  ) : super(const AuthState());
+  ) : super(const AuthState()) {
+    // === AICI ADĂUGĂM LISTENER-UL PE authStateChanges() ===
+    fb.FirebaseAuth.instance.authStateChanges().listen((fb.User? fbUser) async {
+      if (fbUser == null) {
+        // dacă nu e niciun user logat (ex: logout sau sesiune expirată)
+        state = const AuthState(status: AuthStatus.initial, user: null);
+      } else {
+        // dacă există un user în FirebaseAuth, încarcă‐i profilul din Firestore
+        state = state.copyWith(status: AuthStatus.loading);
+        try {
+          final doc =
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(fbUser.uid)
+                  .get();
+          if (!doc.exists) {
+            // în caz că nu există document (ex: user Google nou creat)
+            state = const AuthState(status: AuthStatus.initial, user: null);
+            return;
+          }
+          final userModel = UserModel.fromDocument(doc);
+          final userEntity = userModel.toEntity();
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: userEntity,
+          );
+        } catch (e) {
+          state = state.copyWith(
+            status: AuthStatus.error,
+            errorMessage: e.toString(),
+          );
+        }
+      }
+    });
+  }
 
   /// Începe flow-ul de login
   Future<void> signIn({required String email, required String password}) async {

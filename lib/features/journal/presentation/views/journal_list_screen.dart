@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:renal_care_app/core/theme/app_colors.dart';
 
-import 'package:renal_care_app/features/journal/presentation/viewmodels/journal_viewmodel.dart';
+import 'package:renal_care_app/core/di/journal_providers.dart';
+import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/journal/presentation/views/journal_entry_detail_screen.dart';
 import 'package:renal_care_app/features/journal/presentation/views/journal_entry_form_screen.dart';
 

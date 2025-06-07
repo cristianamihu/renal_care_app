@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:renal_care_app/core/di/measurement_providers.dart';
+import 'package:renal_care_app/core/di/measurements_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
 
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
@@ -121,6 +121,7 @@ class AddMeasurementScreen extends ConsumerWidget {
                                             state.measurement?.temperature ??
                                             0.0,
                                         date: DateTime.now(),
+                                        moment: moment,
                                       ),
                                     );
                                   },
@@ -147,6 +148,7 @@ class AddMeasurementScreen extends ConsumerWidget {
                                             state.measurement?.temperature ??
                                             0.0,
                                         date: DateTime.now(),
+                                        moment: moment,
                                       ),
                                     );
                                   },
@@ -178,6 +180,7 @@ class AddMeasurementScreen extends ConsumerWidget {
                                             state.measurement?.temperature ??
                                             0.0,
                                         date: DateTime.now(),
+                                        moment: moment,
                                       ),
                                     );
                                   },
@@ -206,6 +209,7 @@ class AddMeasurementScreen extends ConsumerWidget {
                                             state.measurement?.diastolic ?? 0,
                                         temperature: temp,
                                         date: DateTime.now(),
+                                        moment: moment,
                                       ),
                                     );
                                   },

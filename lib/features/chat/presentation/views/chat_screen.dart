@@ -23,6 +23,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   bool _isSending = false;
+  bool _profileLinkPressed = false;
 
   /// Metoda apelată când dai tap pe icon-ul de atașare document
   Future<void> _pickDocument() async {
@@ -72,9 +73,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           );
     } catch (e) {
       if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('Eroare la încărcare: \$e')),
-        );
+        messenger.showSnackBar(SnackBar(content: Text('Loading error: \$e')));
       }
     } finally {
       if (mounted) {
@@ -96,13 +95,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   // A helper that returns your tappable name widget:
   Widget _buildProfileLink(String userId, {String? display}) {
-    return GestureDetector(
-      onTap: () => context.go('/profile/$userId'),
-      child: Text(
-        display ?? userId,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          decoration: TextDecoration.underline,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go('/profile/$userId'),
+        onHighlightChanged: (isPressed) {
+          setState(() {
+            _profileLinkPressed = isPressed;
+          });
+        },
+        child: Text(
+          display ?? userId,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color:
+                _profileLinkPressed
+                    ? Colors
+                        .grey // culoarea când e apăsat
+                    : Colors.white, // culoarea normală
+          ),
         ),
       ),
     );
@@ -118,7 +129,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           child: messagesAsync.when(
             data: (msgs) {
               if (msgs.isEmpty) {
-                return const Center(child: Text('Fără mesaje încă'));
+                return const Center(child: Text('No messages yet'));
               }
               return ListView.builder(
                 reverse: true,
@@ -134,22 +145,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 context: context,
                                 builder:
                                     (ctx) => AlertDialog(
-                                      title: const Text('Șterge mesaj'),
+                                      title: const Text('Delete message'),
                                       content: const Text(
-                                        'Ești sigur că vrei să ștergi acest mesaj?',
+                                        'Are you sure you want to delete this message?',
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed:
                                               () =>
                                                   Navigator.of(ctx).pop(false),
-                                          child: const Text('Anulează'),
+                                          child: const Text('Cancel'),
                                         ),
 
                                         TextButton(
                                           onPressed:
                                               () => Navigator.of(ctx).pop(true),
-                                          child: const Text('Șterge'),
+                                          child: const Text('Delete'),
                                         ),
                                       ],
                                     ),
@@ -166,7 +177,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Eroare la ștergere: \$e'),
+                                    content: Text('Error deleting: \$e'),
                                   ),
                                 );
                               }
@@ -194,7 +205,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Eroare la mesaje: \$e')),
+            error: (e, _) => Center(child: Text('Message error: \$e')),
           ),
         ),
 
@@ -245,7 +256,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         _controller.clear();
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Eroare la trimitere: \$e')),
+                          SnackBar(content: Text('Error sending: \$e')),
                         );
                       } finally {
                         if (mounted) setState(() => _isSending = false);

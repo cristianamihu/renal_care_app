@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:renal_care_app/core/theme/app_colors.dart';
 
+import 'package:renal_care_app/core/di/journal_providers.dart';
+import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/journal/domain/entities/journal_entry.dart';
-import 'package:renal_care_app/features/journal/presentation/viewmodels/journal_viewmodel.dart';
 
 class JournalEntryFormScreen extends ConsumerStatefulWidget {
   final JournalEntry? initial;

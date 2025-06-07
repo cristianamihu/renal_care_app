@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
-import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
-import 'core/services/messaging_handler.dart';
+import 'package:renal_care_app/core/utils/alarm_permission.dart';
+import 'package:renal_care_app/core/utils/notification_helper.dart';
+import 'package:renal_care_app/core/theme/app_theme.dart';
+import 'package:renal_care_app/core/router/app_router.dart';
+import 'package:renal_care_app/core/services/messaging_handler.dart';
 
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
@@ -16,19 +24,41 @@ final FlutterLocalNotificationsPlugin _localNotifications =
 // cheia de navigator pe care o va folosi GoRouter pentru callback-uri
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Callback pentru răspunsuri pe background (Android)
+// trebuie marcat astfel pentru a fi găsit la runtime
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse resp) {
+  if (resp.actionId == 'TAKEN_ACTION' && resp.payload != null) {
+    FlutterLocalNotificationsPlugin().cancel(int.parse(resp.payload!));
+  }
+}
+
 /// Configurează plugin-ul de notificări locale
 Future<void> _initLocalNotifications() async {
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+
   await _localNotifications.initialize(
     const InitializationSettings(android: androidSettings),
-    onDidReceiveNotificationResponse: (payload) {
-      // când user-ul tap-uiește notificarea
-      final roomId = payload.payload;
-      if (roomId != null) {
-        // navighează la chat când termini de pornit
-        rootNavigatorKey.currentContext!.go('/chat/$payload');
+    // când primești un răspuns în foreground
+    onDidReceiveNotificationResponse: (NotificationResponse resp) {
+      if (resp.actionId == 'TAKEN_ACTION' && resp.payload != null) {
+        final id = int.parse(resp.payload!);
+        _localNotifications.cancel(id);
+
+        // trimitem broadcast către RingAlarmActivity
+        const MethodChannel(
+          'renal_care_app/alarms',
+        ).invokeMethod('stopAlarm', id);
+      } else {
+        // tap normal pe notificare
+        final roomId = resp.payload;
+        if (roomId != null) {
+          rootNavigatorKey.currentContext?.go('/chat/$roomId');
+        }
       }
     },
+    // captează și în background
+    onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
   );
 
   // creare canal Android pentru notificări de chat
@@ -74,10 +104,26 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // initialize timezone database
+  tz.initializeTimeZones();
+  // pick your local zone (here Bucharest as an example)
+  tz.setLocalLocation(tz.getLocation('Europe/Bucharest'));
+
   await initializeDateFormatting(
     'ro',
   ); // inițializează formatarea pentru limba română
+
+  //notificări locale
   await _initLocalNotifications(); // Initialize local notifications
+  NotificationHelper.setPlugin(_localNotifications);
+  await NotificationHelper.init();
+
+  //permisiuni Android
+  if (Platform.isAndroid) {
+    await Permission.notification.request();
+  }
+  await AlarmPermission.ensureExactAlarmPermission();
 
   // cold-start handling: dacă aplicația a fost deschis din tap pe notificare
   final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
