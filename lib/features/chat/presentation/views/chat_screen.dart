@@ -108,6 +108,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           display ?? userId,
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 20,
             color:
                 _profileLinkPressed
                     ? Colors

@@ -12,6 +12,7 @@ import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MeasurementViewModel extends StateNotifier<MeasurementState> {
   final Ref _ref;
@@ -63,12 +64,18 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
       final measurement = await _getMeasurement(uid);
       final water = await _getWater(uid);
       final sleep = await _getSleep(uid);
+      final prefs = await SharedPreferences.getInstance();
+      final goal = prefs.getInt('waterGoalMl') ?? 2000;
+      final glass = prefs.getInt('glassSizeMl') ?? 200;
+
       state = state.copyWith(
         measurement: measurement,
         water: water,
         sleep: sleep,
         sleepStart: sleep.start,
         sleepEnd: sleep.end,
+        waterGoalMl: goal,
+        glassSizeMl: glass,
         loading: false,
       );
     } catch (e) {
@@ -104,8 +111,12 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
   }
 
   Future<void> updateWaterSettings(int goalMl, int glassSizeMl) async {
-    // eventual salvează în Firestore (poţi folosi un nou use‐case)
-    // actualizează state:
+    // persist în SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('waterGoalMl', goalMl);
+    await prefs.setInt('glassSizeMl', glassSizeMl);
+
+    // actualizează starea
     state = state.copyWith(waterGoalMl: goalMl, glassSizeMl: glassSizeMl);
   }
 

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:renal_care_app/core/di/medication_provider.dart';
 import 'package:renal_care_app/core/widgets/main_scaffold.dart';
+import 'package:renal_care_app/features/appointments/presentation/views/appointment_form_screen.dart';
+import 'package:renal_care_app/features/appointments/presentation/views/appointments_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/edit_profile_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/journal_documents_screen.dart';
 import 'package:renal_care_app/features/auth/presentation/views/login_screen.dart';
@@ -156,10 +158,37 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
         },
       ),
 
+      // Listare programări
+      GoRoute(
+        path: '/appointments',
+        builder: (_, __) => MainScaffold(child: const AppointmentsScreen()),
+
+        routes: [
+          // Adăugare programare nouă
+          GoRoute(
+            path: 'new',
+            builder:
+                (_, __) => MainScaffold(child: const AppointmentFormScreen()),
+          ),
+
+          // Editare programare existentă
+          GoRoute(
+            path: 'edit/:appointmentId',
+            builder: (context, state) {
+              final id = state.pathParameters['appointmentId']!;
+              return MainScaffold(
+                child: AppointmentFormScreen(appointmentId: id),
+              );
+            },
+          ),
+        ],
+      ),
+
       // Mesagerie
       GoRoute(
         path: '/chat',
         builder: (_, __) => const ChatRoomListScreen(),
+
         routes: [
           GoRoute(
             path: ':roomId',

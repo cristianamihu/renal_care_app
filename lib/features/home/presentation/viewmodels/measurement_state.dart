@@ -8,10 +8,10 @@ class MeasurementState {
   final SleepRecord sleep;
   final bool loading;
   final String? error;
-  final int waterGoalMl;
-  final int glassSizeMl;
   final DateTime? sleepStart;
   final DateTime? sleepEnd;
+  final int waterGoalMl;
+  final int glassSizeMl;
 
   MeasurementState({
     this.measurement,
@@ -19,10 +19,10 @@ class MeasurementState {
     required this.sleep,
     this.loading = false,
     this.error,
-    this.waterGoalMl = 2000,
-    this.glassSizeMl = 200,
     this.sleepStart,
     this.sleepEnd,
+    this.waterGoalMl = 2000,
+    this.glassSizeMl = 200,
   });
 
   MeasurementState copyWith({
@@ -31,10 +31,10 @@ class MeasurementState {
     SleepRecord? sleep,
     bool? loading,
     String? error,
-    int? waterGoalMl,
-    int? glassSizeMl,
     DateTime? sleepStart,
     DateTime? sleepEnd,
+    int? waterGoalMl,
+    int? glassSizeMl,
   }) => MeasurementState(
     measurement: measurement ?? this.measurement,
     water: water ?? this.water,
@@ -43,5 +43,7 @@ class MeasurementState {
     error: error,
     sleepStart: sleepStart ?? this.sleepStart,
     sleepEnd: sleepEnd ?? this.sleepEnd,
+    waterGoalMl: waterGoalMl ?? this.waterGoalMl,
+    glassSizeMl: glassSizeMl ?? this.glassSizeMl,
   );
 }
