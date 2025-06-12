@@ -9,11 +9,18 @@ import 'package:renal_care_app/features/medications/presentation/viewmodels/medi
 import 'package:renal_care_app/features/medications/presentation/widgets/medication_tile.dart';
 import 'package:renal_care_app/features/medications/presentation/widgets/weekly_calendar.dart';
 
-class MedicationsScreen extends ConsumerWidget {
+class MedicationsScreen extends ConsumerStatefulWidget {
   const MedicationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MedicationsScreen> createState() => MedicationsScreenState();
+}
+
+class MedicationsScreenState extends ConsumerState<MedicationsScreen> {
+  DateTime selectedDate = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
     final medState = ref.watch(medicationViewModelProvider);
     final medVM = ref.read(medicationViewModelProvider.notifier);
 
@@ -40,42 +47,68 @@ class MedicationsScreen extends ConsumerWidget {
       return Scaffold(
         appBar: _buildGradientAppBar(),
         body: Column(
-          children: const [
-            WeeklyCalendar(), // Calendarul de sus
-            Expanded(child: Center(child: Text('No added medications'))),
+          children: [
+            WeeklyCalendar(
+              initialSelectedDate: selectedDate,
+              onDateSelected: (d) => setState(() => selectedDate = d),
+            ),
+            const SizedBox(height: 48),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.medication_outlined,
+                      size: 80,
+                      color: Colors.white38,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "No doses scheduled this day.",
+                      style: TextStyle(fontSize: 18, color: Colors.white54),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         floatingActionButton: _buildAddButton(context),
       );
     }
 
+    // Filtrezi medicamentele pentru selectedDate:
     final Map<String, List<Medication>> medsByTime = {};
-    final DateTime today = DateTime.now();
-
     for (final med in medState.medications) {
-      // 1) Dacă azi e după endDate, sară peste
-      if (med.endDate != null && today.isAfter(med.endDate!)) continue;
+      // sară dacă selectedDate nu e în interval
+      final dateOnly = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+      );
+      final startOnly = DateTime(
+        med.startDate.year,
+        med.startDate.month,
+        med.startDate.day,
+      );
+      final endOnly =
+          med.endDate != null
+              ? DateTime(
+                med.endDate!.year,
+                med.endDate!.month,
+                med.endDate!.day,
+              )
+              : null;
 
-      // 2) Dacă azi e înainte de startDate, sară peste
-      if (today.isBefore(med.startDate)) continue;
+      if (dateOnly.isBefore(startOnly)) continue;
+      if (endOnly != null && dateOnly.isAfter(endOnly)) continue;
 
-      // Dacă sunt `specificWeekdays`, atunci verifici pur și simplu:
+      final diffDays = dateOnly.difference(startOnly).inDays;
       if (med.specificWeekdays.isNotEmpty) {
-        if (!med.specificWeekdays.contains(today.weekday)) {
-          continue;
-        }
+        if (!med.specificWeekdays.contains(dateOnly.weekday)) continue;
       } else {
-        // Altfel (fără zile specifice) folosești logică pe frequency
-        final int diffDays =
-            DateTime(today.year, today.month, today.day)
-                .difference(
-                  DateTime(
-                    med.startDate.year,
-                    med.startDate.month,
-                    med.startDate.day,
-                  ),
-                )
-                .inDays;
         if (diffDays % med.frequency != 0) continue;
       }
 
@@ -123,45 +156,72 @@ class MedicationsScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Calendarul orizontal
-          const WeeklyCalendar(),
+          WeeklyCalendar(
+            initialSelectedDate: selectedDate,
+            onDateSelected: (d) => setState(() => selectedDate = d),
+          ),
           const SizedBox(height: 8),
 
-          Expanded(
-            child: ListView.builder(
-              itemCount: sortedTimeKeys.length,
-              itemBuilder: (ctx, index) {
-                final String timeKey = sortedTimeKeys[index];
-                final List<Medication> medsAtThisTime = medsByTime[timeKey]!;
-
-                // Parse “HH:mm” în DateTime, doar pentru afişare în widget
-                final parts = timeKey.split(':');
-                final hour = int.parse(parts[0]);
-                final minute = int.parse(parts[1]);
-                final now = DateTime.now();
-                final displayedTime = DateTime(
-                  now.year,
-                  now.month,
-                  now.day,
-                  hour,
-                  minute,
-                );
-
-                // onEdit & onDelete pentru primul medicament din listă
-                final String firstMedId = medsAtThisTime.first.id;
-
-                return MedicationTile(
-                  medsAtThisTime: medsAtThisTime,
-                  time: displayedTime,
-                  onEdit: () {
-                    context.go('/medications/edit/$firstMedId');
-                  },
-                  onDelete: () {
-                    _confirmDelete(context, medVM, firstMedId);
-                  },
-                );
-              },
+          // Dacă nu există doze în ziua selectată → placeholder
+          if (sortedTimeKeys.isEmpty) ...[
+            const SizedBox(height: 48),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.medication_outlined,
+                      size: 80,
+                      color: Colors.white38,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "No doses scheduled this day.",
+                      style: TextStyle(fontSize: 18, color: Colors.white54),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ] else
+            // Altfel, lista cu doze
+            Expanded(
+              child: ListView.builder(
+                itemCount: sortedTimeKeys.length,
+                itemBuilder: (ctx, index) {
+                  final String timeKey = sortedTimeKeys[index];
+                  final List<Medication> medsAtThisTime = medsByTime[timeKey]!;
+
+                  // Parse “HH:mm” în DateTime, doar pentru afişare în widget
+                  final parts = timeKey.split(':');
+                  final hour = int.parse(parts[0]);
+                  final minute = int.parse(parts[1]);
+                  final displayedTime = DateTime(
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
+                    hour,
+                    minute,
+                  );
+
+                  // onEdit & onDelete pentru primul medicament din listă
+                  final String firstMedId = medsAtThisTime.first.id;
+
+                  return MedicationTile(
+                    medsAtThisTime: medsAtThisTime,
+                    time: displayedTime,
+                    onEdit: () {
+                      context.go('/medications/edit/$firstMedId');
+                    },
+                    onDelete: () {
+                      _confirmDelete(context, medVM, firstMedId);
+                    },
+                  );
+                },
+              ),
+            ),
         ],
       ),
       floatingActionButton: _buildAddButton(context),

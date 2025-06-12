@@ -55,7 +55,7 @@ class NotificationHelper {
           // acţiunea “Taken”
           actions: <AndroidNotificationAction>[
             AndroidNotificationAction(
-              'TAKEN_ACTION', // actionId
+              'com.example.renal_care_app.ACTION_TAKEN', // actionId
               'Taken', // butonul propriu-zis
             ),
           ],

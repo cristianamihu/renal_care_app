@@ -38,6 +38,21 @@ class AppointmentsScreen extends ConsumerWidget {
               ? const Center(child: CircularProgressIndicator())
               : state.error != null
               ? Center(child: Text('Error: ${state.error}'))
+              : state.upcoming.isEmpty
+              ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.event_busy, size: 80, color: Colors.white38),
+                    SizedBox(height: 16),
+                    Text(
+                      'You have no upcoming appointments.',
+                      style: TextStyle(fontSize: 18, color: Colors.white54),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
               : ListView.builder(
                 itemCount: state.upcoming.length,
                 itemBuilder: (_, i) {

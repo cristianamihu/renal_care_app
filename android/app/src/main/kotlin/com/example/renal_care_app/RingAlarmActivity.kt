@@ -10,7 +10,7 @@ import android.widget.TextView
 
 class RingAlarmActivity : Activity() {
     companion object {
-        const val ACTION_TAKEN = "TAKEN_ACTION"
+        const val ACTION_TAKEN = "com.example.renal_care_app.ACTION_TAKEN"
     }
 
     private var mediaPlayer: MediaPlayer? = null

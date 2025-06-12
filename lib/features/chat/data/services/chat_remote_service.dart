@@ -20,7 +20,7 @@ class ChatRemoteService {
     return _firestore
         .collection('chat_rooms')
         .where('participants', arrayContains: uid)
-        .orderBy('createdAt', descending: true)
+        .orderBy('lastMessageAt', descending: true)
         .get()
         .then((snap) => snap.docs.map(ChatRoomModel.fromDocument).toList());
   }
@@ -29,7 +29,7 @@ class ChatRemoteService {
     return _firestore
         .collection('chat_rooms')
         .where('participants', arrayContains: uid)
-        .orderBy('createdAt', descending: true)
+        .orderBy('lastMessageAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs.map(ChatRoomModel.fromDocument).toList());
   }
@@ -40,12 +40,14 @@ class ChatRemoteService {
     required String patientUid,
   }) async {
     final ref = _firestore.collection('chat_rooms').doc();
+    final now = DateTime.now();
 
     // construim modelul cu toate câmpurile
     final room = ChatRoomModel(
       id: ref.id,
       participants: [doctorUid, patientUid],
-      createdAt: DateTime.now(),
+      createdAt: now,
+      lastMessageAt: now,
       createdBy: doctorUid,
     );
 
@@ -85,6 +87,7 @@ class ChatRemoteService {
             .doc(roomId)
             .collection('messages')
             .doc();
+
     String? url;
     if (attachmentPath != null) {
       url = await uploadFile(
@@ -94,6 +97,7 @@ class ChatRemoteService {
         filename: attachmentName!,
       );
     }
+
     // Pregătim timestamp-ul și modelul
     final model = MessageModel(
       id: docRef.id,
@@ -107,6 +111,11 @@ class ChatRemoteService {
 
     // Salvăm JSON-ul modelului
     await docRef.set(model.toJson());
+
+    // Aici actualizezi documentul chat_rooms cu timestamp-ul ultimului mesaj
+    await _firestore.collection('chat_rooms').doc(roomId).update({
+      'lastMessageAt': model.timestamp,
+    });
 
     // Returnăm modelul complet (utile pentru UI)
     return model;

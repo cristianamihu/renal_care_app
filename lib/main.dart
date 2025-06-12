@@ -41,7 +41,8 @@ Future<void> _initLocalNotifications() async {
     const InitializationSettings(android: androidSettings),
     // când primești un răspuns în foreground
     onDidReceiveNotificationResponse: (NotificationResponse resp) {
-      if (resp.actionId == 'TAKEN_ACTION' && resp.payload != null) {
+      if (resp.actionId == 'com.example.renal_care_app.ACTION_TAKEN' &&
+          resp.payload != null) {
         final id = int.parse(resp.payload!);
         _localNotifications.cancel(id);
 

@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
+import 'package:intl/intl.dart';
 
 import 'package:renal_care_app/core/di/chat_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/chat/domain/entities/message.dart';
+import 'package:renal_care_app/features/chat/presentation/widgets/chat_list_item.dart';
 import 'package:renal_care_app/features/chat/presentation/widgets/message_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   bool _isSending = false;
   bool _profileLinkPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = ref.read(authViewModelProvider).user!.uid;
+      ref
+          .read(markRoomReadUseCaseProvider)
+          .call(roomId: widget.roomId, userId: uid);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   /// Metoda apelată când dai tap pe icon-ul de atașare document
   Future<void> _pickDocument() async {
@@ -82,15 +101,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final uid = ref.read(authViewModelProvider).user!.uid;
-      ref
-          .read(markRoomReadUseCaseProvider)
-          .call(roomId: widget.roomId, userId: uid);
-    });
+  List<ChatListItem> _flattenMessagesWithSeparators(List<Message> msgs) {
+    final List<ChatListItem> items = [];
+    DateTime? lastDate;
+    for (var m in msgs) {
+      // doar data, fără oră
+      final day = DateTime(
+        m.timestamp.year,
+        m.timestamp.month,
+        m.timestamp.day,
+      );
+      if (lastDate == null || day != lastDate) {
+        items.add(DateSeparator(m.timestamp));
+        lastDate = day;
+      }
+      items.add(MessageItem(m));
+    }
+    return items;
   }
 
   // A helper that returns your tappable name widget:
@@ -129,14 +156,52 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         Expanded(
           child: messagesAsync.when(
             data: (msgs) {
-              if (msgs.isEmpty) {
-                return const Center(child: Text('No messages yet'));
+              // După ce primiţi mesajele, marcaţi-le ca citite:
+              if (msgs.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref
+                      .read(markRoomReadUseCaseProvider)
+                      .call(roomId: widget.roomId, userId: uid);
+                });
               }
+
+              // Flattenăm cu separatori
+              final items = _flattenMessagesWithSeparators(msgs);
+
+              // Afișăm lista combinată
               return ListView.builder(
                 reverse: true,
-                itemCount: msgs.length,
-                itemBuilder: (_, i) {
-                  final msg = msgs[msgs.length - 1 - i];
+                itemCount: items.length,
+                itemBuilder: (ctx, i) {
+                  // pentru reverse, luăm elementul de la coadă
+                  final item = items[items.length - 1 - i];
+
+                  if (item is DateSeparator) {
+                    // Separator de dată
+                    final when = item.when;
+                    final now = DateTime.now();
+                    final diff = now.difference(when);
+                    final label =
+                        diff.inHours < 24
+                            ? DateFormat('HH:mm').format(when)
+                            : DateFormat('dd MMM yyyy').format(when);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Mesaj
+                  final msg = (item as MessageItem).message;
                   return GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onLongPress:
@@ -350,11 +415,5 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }

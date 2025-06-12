@@ -7,12 +7,14 @@ class ChatRoomModel {
   final List<String> participants;
   final DateTime createdAt;
   final String createdBy;
+  final DateTime lastMessageAt;
 
   ChatRoomModel({
     required this.id,
     required this.participants,
     required this.createdAt,
     required this.createdBy,
+    required this.lastMessageAt,
   });
 
   factory ChatRoomModel.fromDocument(
@@ -24,6 +26,9 @@ class ChatRoomModel {
       participants: List<String>.from(data['participants'] as List),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       createdBy: data['createdBy'] as String,
+      lastMessageAt:
+          (data['lastMessageAt'] as Timestamp?)?.toDate() ??
+          (data['createdAt'] as Timestamp).toDate(),
     );
   }
 
@@ -31,6 +36,7 @@ class ChatRoomModel {
     'participants': participants,
     'createdAt': Timestamp.fromDate(createdAt),
     'createdBy': createdBy,
+    'lastMessageAt': Timestamp.fromDate(lastMessageAt),
   };
 
   /// Convertește DTO-ul în entitatea de domain
@@ -40,6 +46,7 @@ class ChatRoomModel {
       participants: participants,
       createdAt: createdAt,
       createdBy: createdBy,
+      lastMessageAt: lastMessageAt,
     );
   }
 }

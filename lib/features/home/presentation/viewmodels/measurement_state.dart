@@ -1,3 +1,4 @@
+import 'package:renal_care_app/features/home/domain/entities/allergy.dart';
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
 import 'package:renal_care_app/features/home/domain/entities/sleep_record.dart';
 import 'package:renal_care_app/features/home/domain/entities/water_intake.dart';
@@ -12,6 +13,7 @@ class MeasurementState {
   final DateTime? sleepEnd;
   final int waterGoalMl;
   final int glassSizeMl;
+  final List<Allergy> allergies;
 
   MeasurementState({
     this.measurement,
@@ -21,8 +23,9 @@ class MeasurementState {
     this.error,
     this.sleepStart,
     this.sleepEnd,
-    this.waterGoalMl = 2000,
+    this.waterGoalMl = 3000,
     this.glassSizeMl = 200,
+    this.allergies = const [],
   });
 
   MeasurementState copyWith({
@@ -35,6 +38,7 @@ class MeasurementState {
     DateTime? sleepEnd,
     int? waterGoalMl,
     int? glassSizeMl,
+    List<Allergy>? allergies,
   }) => MeasurementState(
     measurement: measurement ?? this.measurement,
     water: water ?? this.water,
@@ -45,5 +49,6 @@ class MeasurementState {
     sleepEnd: sleepEnd ?? this.sleepEnd,
     waterGoalMl: waterGoalMl ?? this.waterGoalMl,
     glassSizeMl: glassSizeMl ?? this.glassSizeMl,
+    allergies: allergies ?? this.allergies,
   );
 }

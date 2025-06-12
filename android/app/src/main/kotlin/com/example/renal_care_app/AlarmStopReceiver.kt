@@ -7,6 +7,11 @@ import android.app.NotificationManager
 import android.util.Log
 
 class AlarmStopReceiver : BroadcastReceiver() {
+  companion object {
+    // folosit de MainActivity când trimite broadcast-ul
+    const val ACTION_STOP_ALARM = "com.example.renal_care_app.ACTION_STOP_ALARM"
+  }
+  
   override fun onReceive(context: Context, intent: Intent) {
     val id = intent.getIntExtra("notificationId", -1)
     Log.d("AlarmStopReceiver", "Stopping alarm notification $id")

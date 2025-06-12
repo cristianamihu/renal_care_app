@@ -123,46 +123,68 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
   }
 
   Future<void> _onSave(Appointment? initial) async {
-    if (!_formKey.currentState!.validate() ||
-        _pickedDateTime == null ||
-        (_currentRole == 'patient' && _selectedDoctorId == null)) {
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      // first, validate all the text fields
+      if (!_formKey.currentState!.validate()) return;
+
+      // next, make sure they've picked a date & time
+      if (_pickedDateTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You must select the date and time of the appointment.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // if patient, make sure a doctor is selected
       if (_currentRole == 'patient' && _selectedDoctorId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Trebuie să selectezi un doctor.')),
+          const SnackBar(content: Text('You must select a doctor.')),
         );
+        return;
       }
-      return;
+
+      final me = ref.read(authViewModelProvider).user!;
+      // referință la colecția de appointments a pacientului
+      final appointmentsCol = FirebaseFirestore.instance
+          .collection('users')
+          .doc(me.uid)
+          .collection('appointments');
+
+      // dacă e edit => ia id-ul vechi, altfel cere Firestore unul nou
+      final newId = initial?.id ?? appointmentsCol.doc().id;
+
+      final appt = Appointment(
+        id: newId,
+        patientId: me.uid,
+        doctorId: initial?.doctorId ?? _selectedDoctorId!,
+        dateTime: _pickedDateTime!,
+        description: _descCtrl.text.trim(),
+        doctorAddress: initial?.doctorAddress ?? _selectedDoctorAddress ?? '',
+      );
+
+      final vm = ref.read(appointmentViewModelProvider.notifier);
+      if (initial == null) {
+        await vm.create(appt);
+      } else {
+        await vm.update(appt);
+      }
+
+      if (!mounted) return;
+      router.go('/appointments');
+    } catch (e, st) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error saving appointment: $e')),
+      );
+      debugPrintStack(label: '_onSave error', stackTrace: st);
     }
-
-    final me = ref.read(authViewModelProvider).user!;
-    // referință la colecția de appointments a pacientului
-    final appointmentsCol = FirebaseFirestore.instance
-        .collection('users')
-        .doc(me.uid)
-        .collection('appointments');
-
-    // dacă e edit => ia id-ul vechi, altfel cere Firestore unul nou
-    final newId = initial?.id ?? appointmentsCol.doc().id;
-
-    final appt = Appointment(
-      id: newId,
-      patientId: me.uid,
-      doctorId: initial?.doctorId ?? _selectedDoctorId!,
-      dateTime: _pickedDateTime!,
-      description: _descCtrl.text.trim(),
-      doctorAddress: initial?.doctorAddress ?? _selectedDoctorAddress!,
-    );
-
-    final vm = ref.read(appointmentViewModelProvider.notifier);
-    if (initial == null) {
-      await vm.create(appt);
-    } else {
-      await vm.update(appt);
-    }
-
-    // once it's committed and re‐loaded, pop back:
-    if (!mounted) return;
-    context.pop();
   }
 
   Widget _buildForm(BuildContext ctx, Appointment? initial) {
@@ -259,10 +281,9 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check),
-                  label: Text(isEditing ? 'UPDATE' : 'CREATE'),
+                child: ElevatedButton(
                   onPressed: () async => await _onSave(initial),
+                  child: Text(isEditing ? 'UPDATE' : 'CREATE'),
                 ),
               ),
             ],

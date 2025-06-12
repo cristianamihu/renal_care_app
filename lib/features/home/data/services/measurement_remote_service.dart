@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:renal_care_app/features/home/data/models/allergy_model.dart';
 
 import 'package:renal_care_app/features/home/data/models/measurement_model.dart';
 import 'package:renal_care_app/features/home/data/models/water_intake_model.dart';
@@ -82,5 +83,35 @@ class MeasurementRemoteService {
         .collection('sleep')
         .doc(key)
         .set(model.toJson());
+  }
+
+  /// Stream de alergii ale user-ului
+  Stream<List<AllergyModel>> watchAllergies(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('allergies')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map(AllergyModel.fromDoc).toList());
+  }
+
+  /// Adaugă o alergie nouă în Firestore
+  Future<void> addAllergy(String uid, String name) {
+    final col = _firestore.collection('users').doc(uid).collection('allergies');
+    return col.doc().set({
+      'name': name,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Şterge o alergie după ID
+  Future<void> deleteAllergy(String uid, String allergyId) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('allergies')
+        .doc(allergyId)
+        .delete();
   }
 }

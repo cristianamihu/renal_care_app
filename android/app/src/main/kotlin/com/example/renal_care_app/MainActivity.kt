@@ -7,6 +7,8 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
+import com.example.renal_care_app.AlarmStopReceiver
+
 class MainActivity : FlutterActivity() {
   private val CHANNEL = "renal_care_app/alarms"
 
@@ -20,9 +22,10 @@ class MainActivity : FlutterActivity() {
         }
         "stopAlarm" -> {
           val id = call.arguments as Int
-          // trimitem broadcast către RingAlarmActivity
-          val intent = Intent("renal_care_app.ACTION_STOP_ALARM")
-          intent.putExtra("notificationId", id)
+          val intent = Intent(this, AlarmStopReceiver::class.java).apply {
+            action = AlarmStopReceiver.ACTION_STOP_ALARM
+            putExtra("notificationId", id)
+          }
           sendBroadcast(intent)
           result.success(null)
         }

@@ -4,6 +4,7 @@ import 'package:renal_care_app/features/home/data/models/measurement_model.dart'
 import 'package:renal_care_app/features/home/data/models/sleep_record_model.dart';
 import 'package:renal_care_app/features/home/data/models/water_intake_model.dart';
 import 'package:renal_care_app/features/home/data/services/measurement_remote_service.dart';
+import 'package:renal_care_app/features/home/domain/entities/allergy.dart';
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
 import 'package:renal_care_app/features/home/domain/entities/water_intake.dart';
 import 'package:renal_care_app/features/home/domain/entities/sleep_record.dart';
@@ -65,5 +66,22 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
       end: Timestamp.fromDate(s.end),
     );
     await _remote.saveTodaySleep(uid, model);
+  }
+
+  @override
+  Stream<List<Allergy>> watchAllergies(String uid) {
+    return _remote
+        .watchAllergies(uid)
+        .map((models) => models.map((m) => m.toEntity()).toList());
+  }
+
+  @override
+  Future<void> addAllergy(String uid, String name) {
+    return _remote.addAllergy(uid, name);
+  }
+
+  @override
+  Future<void> deleteAllergy(String uid, String allergyId) {
+    return _remote.deleteAllergy(uid, allergyId);
   }
 }

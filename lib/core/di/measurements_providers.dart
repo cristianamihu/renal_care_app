@@ -6,9 +6,12 @@ import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmo
 import 'package:renal_care_app/features/home/data/services/measurement_remote_service.dart';
 import 'package:renal_care_app/features/home/data/repositories/measurement_repository_impl.dart';
 import 'package:renal_care_app/features/home/domain/repositories/measurement_repository.dart';
+import 'package:renal_care_app/features/home/domain/usecases/add_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/add_water_glass.dart';
+import 'package:renal_care_app/features/home/domain/usecases/delete_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_measurements.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_sleep_history.dart';
+import 'package:renal_care_app/features/home/domain/usecases/list_allergies.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_measurement.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
@@ -52,6 +55,18 @@ final updateTodaySleepProvider = Provider<UpdateTodaySleep>((ref) {
   return UpdateTodaySleep(ref.watch(measurementRepositoryProvider));
 });
 
+final listAllergiesProvider = Provider<ListAllergies>((ref) {
+  return ListAllergies(ref.watch(measurementRepositoryProvider));
+});
+
+final addAllergyProvider = Provider<AddAllergy>((ref) {
+  return AddAllergy(ref.watch(measurementRepositoryProvider));
+});
+
+final deleteAllergyProvider = Provider<DeleteAllergy>((ref) {
+  return DeleteAllergy(ref.watch(measurementRepositoryProvider));
+});
+
 /// ViewModel
 final measurementViewModelProvider =
     StateNotifierProvider.autoDispose<MeasurementViewModel, MeasurementState>((
@@ -65,6 +80,9 @@ final measurementViewModelProvider =
         ref.watch(updateTodayWaterProvider),
         ref.watch(getTodaySleepProvider),
         ref.watch(updateTodaySleepProvider),
+        ref.watch(listAllergiesProvider),
+        ref.watch(addAllergyProvider),
+        ref.watch(deleteAllergyProvider),
       );
     });
 

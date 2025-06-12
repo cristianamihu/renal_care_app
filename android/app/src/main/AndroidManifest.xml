@@ -54,7 +54,7 @@
             android:screenOrientation="portrait"
             android:launchMode="singleInstance">
             <intent-filter>
-                <action android:name="TAKEN_ACTION"/>
+                <action android:name="com.example.renal_care_app.ACTION_TAKEN"/>
             </intent-filter>
         </activity>
 
@@ -95,7 +95,7 @@
             android:name=".AlarmStopReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="renal_care_app.ACTION_STOP_ALARM"/>
+                <action android:name="com.example.renal_care_app.ACTION_STOP_ALARM"/>
             </intent-filter>
         </receiver>
 

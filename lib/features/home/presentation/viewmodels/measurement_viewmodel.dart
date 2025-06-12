@@ -4,9 +4,12 @@ import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
 import 'package:renal_care_app/features/home/domain/entities/water_intake.dart';
 import 'package:renal_care_app/features/home/domain/entities/sleep_record.dart';
+import 'package:renal_care_app/features/home/domain/usecases/add_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/add_water_glass.dart';
+import 'package:renal_care_app/features/home/domain/usecases/delete_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_measurements.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_sleep_history.dart';
+import 'package:renal_care_app/features/home/domain/usecases/list_allergies.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_measurement.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
@@ -22,6 +25,9 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
   final UpdateTodayWater _updateWater;
   final GetTodaySleep _getSleep;
   final UpdateTodaySleep _updateSleep;
+  final ListAllergies _listAllergies;
+  final AddAllergy _addAllergy;
+  final DeleteAllergy _deleteAllergy;
 
   MeasurementViewModel(
     this._ref,
@@ -31,6 +37,9 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
     this._updateWater,
     this._getSleep,
     this._updateSleep,
+    this._listAllergies,
+    this._addAllergy,
+    this._deleteAllergy,
   ) : super(
         MeasurementState(
           water: WaterIntake(date: DateTime.now(), glasses: 0),
@@ -51,8 +60,15 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
         _loadAll();
       }
     });
-    // Încarcă inițial pentru UID-ul actual (dacă există)
+    // Încarcă datele inițiale
     _loadAll();
+
+    // Ascultă stream-ul de alergii
+    final uid = _ref.read(authViewModelProvider).user!.uid;
+    _listAllergies(uid).listen((allergies) {
+      // când vine o nouă listă, o pui în state
+      state = state.copyWith(allergies: allergies);
+    });
   }
 
   Future<void> _loadAll() async {
@@ -134,5 +150,17 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
       sleepStart: start,
       sleepEnd: end,
     );
+  }
+
+  /// Adaugă o nouă alergie și starea va fi actualizată automat
+  Future<void> addAllergy(String name) async {
+    final uid = _ref.read(authViewModelProvider).user!.uid;
+    await _addAllergy(uid, name);
+  }
+
+  /// Șterge alergia cu acel ID
+  Future<void> deleteAllergy(String allergyId) async {
+    final uid = _ref.read(authViewModelProvider).user!.uid;
+    await _deleteAllergy(uid, allergyId);
   }
 }

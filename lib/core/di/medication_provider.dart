@@ -69,7 +69,9 @@ final deleteMedicationUseCaseProvider = Provider<DeleteMedication>((ref) {
 
 /// Provider pentru ViewModel-ul de medicamente (stare + logică)
 final medicationViewModelProvider =
-    StateNotifierProvider<MedicationViewModel, MedicationState>((ref) {
+    StateNotifierProvider.autoDispose<MedicationViewModel, MedicationState>((
+      ref,
+    ) {
       final getUseCase = ref.read(getMedicationsUseCaseProvider);
       final addUseCase = ref.read(addMedicationUseCaseProvider);
       final updateUseCase = ref.read(updateMedicationUseCaseProvider);

@@ -9,6 +9,7 @@ import 'package:renal_care_app/core/di/measurements_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/presentation/views/add_measurement_screen.dart';
+import 'package:renal_care_app/features/home/presentation/widgets/allergy_form.dart';
 import 'package:renal_care_app/features/home/presentation/widgets/drink_water_info_dialog.dart';
 import 'package:renal_care_app/features/home/presentation/widgets/sleep_time_dialog.dart';
 
@@ -334,7 +335,6 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             ),
                       );
                       if (times != null) {
-                        // compute duration in hours+minutes
                         final diff = times.end.difference(times.start);
                         final hours =
                             diff.inHours + (diff.inMinutes % 60) / 60.0;
@@ -357,38 +357,91 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                 color: AppColors.gradient3,
                               ),
                               const SizedBox(width: 12),
-
                               Expanded(
                                 child:
-                                    state.sleepStart != null &&
-                                            state.sleepEnd != null
+                                    state.sleep.hours > 0
+                                        // dacă am introdus ore de somn
                                         ? Text(
                                           '${_formatTime(state.sleepStart!)} - ${_formatTime(state.sleepEnd!)}',
                                           style: const TextStyle(fontSize: 16),
                                         )
+                                        // placeholder cu blank-uri
                                         : const Text(
-                                          'Tap to set sleep times',
-                                          style: TextStyle(color: Colors.grey),
+                                          '__:__ - __:__',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                            fontFamily:
+                                                'monospace', // ca să arate aliniat
+                                          ),
                                         ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          if (state.sleepStart != null &&
-                              state.sleepEnd != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                '${(state.sleep.hours).floor()} h ${((state.sleep.hours % 1) * 60).round()} m',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              state.sleep.hours > 0
+                                  ? '${state.sleep.hours.floor()} h ${((state.sleep.hours % 1) * 60).round()} m'
+                                  : '0 h 0 m',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Allergy Card
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: ListTile(
+                    leading: const Icon(Icons.warning, color: Colors.redAccent),
+                    title: const Text('Allergies'),
+                    subtitle:
+                        state.allergies.isEmpty
+                            ? const Text(
+                              'None added',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                            : Wrap(
+                              spacing: 8,
+                              children:
+                                  state.allergies.map((a) {
+                                    return Chip(
+                                      label: Text(a.name),
+                                      onDeleted: () => vm.deleteAllergy(a.id),
+                                    );
+                                  }).toList(),
+                            ),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder:
+                            (ctx) => AlertDialog(
+                              content: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: AllergyForm(vm: vm),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                      );
+                    },
                   ),
                 ),
               ],

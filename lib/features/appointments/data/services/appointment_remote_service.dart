@@ -52,6 +52,7 @@ class AppointmentRemoteService {
     batch.set(slotRef, {
       'appointmentId': model.id,
       'patientId': patientId,
+      'doctorId': model.doctorId,
       'dateTime': model.dateTime,
       'description': model.description,
       'doctorAddress': model.doctorAddress,
@@ -112,6 +113,7 @@ class AppointmentRemoteService {
       batch.set(newSlotRef, {
         'appointmentId': model.id,
         'patientId': patientId,
+        'doctorId': model.doctorId,
         'dateTime': model.dateTime,
         'description': model.description,
         'doctorAddress': model.doctorAddress,

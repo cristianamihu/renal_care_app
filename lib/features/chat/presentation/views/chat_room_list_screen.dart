@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
 
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
@@ -22,10 +23,8 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
     final roomsAsync = ref.watch(chatRoomsStreamProvider);
 
     return PopScope(
-      // never automatically pop
       canPop: false,
       onPopInvokedWithResult: (_, __) async {
-        // single back → home
         context.go('/home');
       },
       child: Scaffold(
@@ -48,6 +47,7 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
           leading: BackButton(onPressed: () => context.go('/home')),
           title: const Text('Messages'),
         ),
+
         body: roomsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Eroare: $e')),
@@ -90,8 +90,6 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                                       (e, _) =>
                                           ListTile(title: Text('Error: $e')),
                                   data: (msgs) {
-                                    final lastMsg =
-                                        msgs.isNotEmpty ? msgs.last : null;
                                     return roomWithReadAsync.when(
                                       loading:
                                           () => const ListTile(
@@ -102,7 +100,7 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                                             title: Text('Error: $e'),
                                           ),
                                       data: (roomWithRead) {
-                                        // count unread
+                                        // număr de mesaje necitite
                                         final lastRead =
                                             roomWithRead.lastRead[me] ??
                                             DateTime.fromMillisecondsSinceEpoch(
@@ -116,6 +114,19 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                                                   ),
                                                 )
                                                 .length;
+
+                                        // calcul label timp
+                                        final when =
+                                            roomWithRead.room.lastMessageAt;
+                                        final now = DateTime.now();
+                                        final label =
+                                            now.difference(when).inHours < 24
+                                                ? DateFormat(
+                                                  'HH:mm',
+                                                ).format(when)
+                                                : DateFormat(
+                                                  'dd MMM yyyy',
+                                                ).format(when);
 
                                         return ListTile(
                                           title: ref
@@ -138,58 +149,62 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                                                     ),
                                               ),
                                           subtitle:
-                                              lastMsg == null
+                                              msgs.isEmpty
                                                   ? const Text(
                                                     'No messages yet',
                                                   )
-                                                  : lastMsg.text.isNotEmpty
-                                                  ? Text(
-                                                    lastMsg.text,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  )
-                                                  : Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: const [
-                                                      Icon(
-                                                        Icons.attach_file,
-                                                        size: 16,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      SizedBox(width: 4),
-                                                      Text(
-                                                        'Attachment',
-                                                        style: TextStyle(
-                                                          color: Colors.grey,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                                  : (msgs.last.text.isNotEmpty
+                                                      ? Text(
+                                                        msgs.last.text,
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                      )
+                                                      : Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: const [
+                                                          Icon(
+                                                            Icons.attach_file,
+                                                            size: 16,
+                                                            color: Colors.grey,
+                                                          ),
+                                                          SizedBox(width: 4),
+                                                          Text(
+                                                            'Attachment',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      )),
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              if (unreadCount > 0)
+                                              // ora / data
+                                              Text(
+                                                label,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+
+                                              // badge doar la mesaje necitite
+                                              if (unreadCount > 0) ...[
+                                                const SizedBox(width: 8),
                                                 CircleAvatar(
                                                   radius: 12,
-                                                  backgroundColor: Colors.red,
+                                                  backgroundColor:
+                                                      AppColors.gradient3,
                                                   child: Text(
                                                     '$unreadCount',
                                                     style: const TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 12,
                                                     ),
-                                                  ),
-                                                ),
-                                              if (lastMsg != null) ...[
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  '${lastMsg.timestamp.hour.toString().padLeft(2, '0')}:'
-                                                  '${lastMsg.timestamp.minute.toString().padLeft(2, '0')}',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey,
                                                   ),
                                                 ),
                                               ],
