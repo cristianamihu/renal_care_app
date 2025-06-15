@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:renal_care_app/core/di/chat_providers.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:renal_care_app/features/chat/domain/entities/chat_room.dart';
 import 'package:renal_care_app/features/chat/domain/entities/patient_info.dart';
 
 class PatientSearchBar extends ConsumerStatefulWidget {
@@ -65,34 +66,29 @@ class _PatientSearchBarState extends ConsumerState<PatientSearchBar> {
               title: Text(p.email),
               subtitle: p.name != null ? Text(p.name!) : null,
               onTap: () async {
-                // async aici, cu mounted-check
-                // crează room și apoi navighează /chat/:roomId
-                final localContext = context;
-                final doctorUid = ref.read(authViewModelProvider).user!.uid;
+                // Golim câmpul și sugerările
+                _searchController.clear();
+                setState(() => suggestions = []);
+                FocusScope.of(context).unfocus();
 
+                // Creăm camera
+                late final ChatRoom room;
                 try {
-                  // Creează chat-ul
-                  final room = await ref
+                  final doctorUid = ref.read(authViewModelProvider).user!.uid;
+                  room = await ref
                       .read(createChatRoomUseCaseProvider)
                       .call(doctorUid: doctorUid, patientUid: p.uid);
-
-                  // Dacă widgetul mai există, golește câmpul și sugestiile
-                  if (!localContext.mounted) return;
-                  _searchController.clear();
-                  setState(() => suggestions = []);
-
-                  // Ascunde tastatura
-                  FocusScope.of(context).unfocus();
-
-                  // Navighează în chat
-                  localContext.go('/chat/${room.id}');
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Nu s-a putut crea chat: $e')),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Nu s-a putut crea chat: $e')),
+                  );
+                  return;
                 }
+
+                // Navigăm
+                if (!context.mounted) return;
+                context.go('/chat/${room.id}');
               },
             ),
           ),

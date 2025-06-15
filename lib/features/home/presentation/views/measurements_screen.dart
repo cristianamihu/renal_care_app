@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'package:renal_care_app/core/di/measurements_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/presentation/views/add_measurement_screen.dart';
 import 'package:renal_care_app/features/home/presentation/widgets/allergy_form.dart';
 import 'package:renal_care_app/features/home/presentation/widgets/drink_water_info_dialog.dart';
@@ -22,14 +19,6 @@ class MeasurementsScreen extends ConsumerStatefulWidget {
 
 class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   DateTime? _lastBackPress;
-
-  // Handle user logout
-  Future<void> _handleLogout() async {
-    await ref.read(authViewModelProvider.notifier).signOut();
-    if (!mounted) return;
-    // Navigate to login screen after logout
-    context.go('/login');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,12 +85,6 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 icon: const Icon(Icons.chat_bubble_outline),
                 tooltip: 'Chat',
                 onPressed: () => context.go('/chat'),
-              ),
-
-              // butonul de logout
-              IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: _handleLogout,
               ),
             ],
           ),

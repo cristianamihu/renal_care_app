@@ -44,7 +44,7 @@ class JournalRemoteService {
     // Scrie simultan în /users/{uid}/journal_documents/{entryId}
     final docCopy = {
       'name': 'Note: $label',
-      'content': text, // stocare tocmai textul notei
+      'url': text, // stocare tocmai textul notei
       'type': 'text/plain',
       'addedAt': Timestamp.fromDate(now),
     };
@@ -86,7 +86,7 @@ class JournalRemoteService {
 
     await docRefCopy.update({
       'name': 'Note: $label',
-      'content': text,
+      'url': text,
       'addedAt': Timestamp.fromDate(now),
       // Păstrăm type = 'text/plain'
     });

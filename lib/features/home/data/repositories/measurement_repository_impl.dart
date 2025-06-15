@@ -84,4 +84,24 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
   Future<void> deleteAllergy(String uid, String allergyId) {
     return _remote.deleteAllergy(uid, allergyId);
   }
+
+  @override
+  Future<List<WaterIntake>> getWaterHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final models = await _remote.fetchWaterHistory(uid, from, to);
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<List<SleepRecord>> getSleepHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final models = await _remote.fetchSleepHistory(uid, from, to);
+    return models.map((m) => m.toEntity()).toList();
+  }
 }

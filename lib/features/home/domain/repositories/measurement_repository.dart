@@ -16,4 +16,18 @@ abstract class MeasurementRepository {
   Stream<List<Allergy>> watchAllergies(String uid);
   Future<void> addAllergy(String uid, String name);
   Future<void> deleteAllergy(String uid, String allergyId);
+
+  /// Returnează lista de WaterIntake între două date
+  Future<List<WaterIntake>> getWaterHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  );
+
+  /// Returnează istoria somnului între două date
+  Future<List<SleepRecord>> getSleepHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  );
 }

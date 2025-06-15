@@ -25,10 +25,12 @@ final journalDocsForUserProvider = StreamProvider.autoDispose
             (snap) =>
                 snap.docs.map((doc) {
                   final data = doc.data();
+                  final textUrl =
+                      (data['url'] as String?) ?? (data['content'] as String?);
                   return JournalDocument(
                     id: doc.id,
                     name: data['name'] as String,
-                    url: data['url'] as String,
+                    url: textUrl!,
                     type: data['type'] as String,
                     addedAt: (data['addedAt'] as Timestamp).toDate(),
                   );

@@ -24,24 +24,51 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   bool _isSending = false;
   bool _profileLinkPressed = false;
+  bool _showScrollToBottom = false;
 
   @override
   void initState() {
     super.initState();
+
+    // mark room as read once on open
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uid = ref.read(authViewModelProvider).user!.uid;
       ref
           .read(markRoomReadUseCaseProvider)
           .call(roomId: widget.roomId, userId: uid);
     });
+
+    // show/hide “scroll to bottom” button
+    _scrollController.addListener(() {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final curScroll = _scrollController.offset;
+      const threshold = 200.0;
+      final shouldShow = (maxScroll - curScroll) > threshold;
+      if (shouldShow != _showScrollToBottom) {
+        setState(() => _showScrollToBottom = shouldShow);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   /// Metoda apelată când dai tap pe icon-ul de atașare document
@@ -151,193 +178,223 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildChatBody(AsyncValue<List<Message>> messagesAsync) {
     final uid = ref.read(authViewModelProvider).user!.uid;
 
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          child: messagesAsync.when(
-            data: (msgs) {
-              // După ce primiţi mesajele, marcaţi-le ca citite:
-              if (msgs.isNotEmpty) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ref
-                      .read(markRoomReadUseCaseProvider)
-                      .call(roomId: widget.roomId, userId: uid);
-                });
-              }
-
-              // Flattenăm cu separatori
-              final items = _flattenMessagesWithSeparators(msgs);
-
-              // Afișăm lista combinată
-              return ListView.builder(
-                reverse: true,
-                itemCount: items.length,
-                itemBuilder: (ctx, i) {
-                  // pentru reverse, luăm elementul de la coadă
-                  final item = items[items.length - 1 - i];
-
-                  if (item is DateSeparator) {
-                    // Separator de dată
-                    final when = item.when;
-                    final now = DateTime.now();
-                    final diff = now.difference(when);
-                    final label =
-                        diff.inHours < 24
-                            ? DateFormat('HH:mm').format(when)
-                            : DateFormat('dd MMM yyyy').format(when);
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Center(
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
+        Column(
+          children: [
+            Expanded(
+              child: messagesAsync.when(
+                data: (msgs) {
+                  // După ce primiţi mesajele, marcaţi-le ca citite:
+                  if (msgs.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      ref
+                          .read(markRoomReadUseCaseProvider)
+                          .call(roomId: widget.roomId, userId: uid);
+                    });
                   }
 
-                  // Mesaj
-                  final msg = (item as MessageItem).message;
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onLongPress:
-                        msg.senderId == uid
-                            ? () async {
-                              final shouldDelete = await showDialog<bool>(
-                                context: context,
-                                builder:
-                                    (ctx) => AlertDialog(
-                                      title: const Text('Delete message'),
-                                      content: const Text(
-                                        'Are you sure you want to delete this message?',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () =>
-                                                  Navigator.of(ctx).pop(false),
-                                          child: const Text('Cancel'),
-                                        ),
+                  // Flattenăm cu separatori
+                  final items = _flattenMessagesWithSeparators(msgs);
 
-                                        TextButton(
-                                          onPressed:
-                                              () => Navigator.of(ctx).pop(true),
-                                          child: const Text('Delete'),
+                  // Afișăm lista combinată
+                  return ListView.builder(
+                    controller: _scrollController,
+                    reverse: true,
+                    itemCount: items.length,
+                    itemBuilder: (ctx, i) {
+                      // pentru reverse, luăm elementul de la coadă
+                      final item = items[items.length - 1 - i];
+
+                      if (item is DateSeparator) {
+                        // Separator de dată
+                        final when = item.when;
+                        final now = DateTime.now();
+                        final diff = now.difference(when);
+                        final label =
+                            diff.inHours < 24
+                                ? DateFormat('HH:mm').format(when)
+                                : DateFormat('dd MMM yyyy').format(when);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Center(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Mesaj
+                      final msg = (item as MessageItem).message;
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onLongPress:
+                            msg.senderId == uid
+                                ? () async {
+                                  final shouldDelete = await showDialog<bool>(
+                                    context: context,
+                                    builder:
+                                        (ctx) => AlertDialog(
+                                          title: const Text('Delete message'),
+                                          content: const Text(
+                                            'Are you sure you want to delete this message?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    ctx,
+                                                  ).pop(false),
+                                              child: const Text('Cancel'),
+                                            ),
+
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    ctx,
+                                                  ).pop(true),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                              );
-                              if (shouldDelete != true) return;
-                              try {
-                                await ref
-                                    .read(deleteMessageUseCaseProvider)
-                                    .call(
-                                      roomId: widget.roomId,
-                                      messageId: msg.id,
+                                  );
+                                  if (shouldDelete != true) return;
+                                  try {
+                                    await ref
+                                        .read(deleteMessageUseCaseProvider)
+                                        .call(
+                                          roomId: widget.roomId,
+                                          messageId: msg.id,
+                                        );
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error deleting: \$e'),
+                                      ),
                                     );
-                              } catch (e) {
-                                if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error deleting: \$e'),
-                                  ),
-                                );
-                              }
-                            }
-                            : null,
-                    child: Column(
-                      crossAxisAlignment:
-                          msg.senderId == uid
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                      children: [
-                        MessageBubble(
-                          text: msg.text,
-                          isMe: msg.senderId == uid,
-                          timestamp: msg.timestamp,
-                          attachmentUrl: msg.attachmentUrl,
-                          attachmentName: msg.attachmentName,
-                          attachmentType: msg.attachmentType,
-                          onDelete: null,
+                                  }
+                                }
+                                : null,
+                        child: Column(
+                          crossAxisAlignment:
+                              msg.senderId == uid
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                          children: [
+                            MessageBubble(
+                              text: msg.text,
+                              isMe: msg.senderId == uid,
+                              timestamp: msg.timestamp,
+                              attachmentUrl: msg.attachmentUrl,
+                              attachmentName: msg.attachmentName,
+                              attachmentType: msg.attachmentType,
+                              onDelete: null,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Message error: \$e')),
-          ),
-        ),
-
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.attach_file),
-                onPressed: _pickDocument,
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Message error: \$e')),
               ),
+            ),
 
-              IconButton(
-                icon: const Icon(Icons.camera_alt),
-                onPressed: _pickImageFromCamera,
-              ),
-
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Write a message',
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.attach_file),
+                    onPressed: _pickDocument,
                   ),
-                ),
-              ),
-              _isSending
-                  ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: () async {
-                      final text = _controller.text.trim();
-                      if (text.isEmpty) return;
-                      setState(() => _isSending = true);
-                      try {
-                        await ref
-                            .read(sendMessageUseCaseProvider)
-                            .call(
-                              roomId: widget.roomId,
-                              senderId: uid,
-                              text: text,
+
+                  IconButton(
+                    icon: const Icon(Icons.camera_alt),
+                    onPressed: _pickImageFromCamera,
+                  ),
+
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Write a message',
+                      ),
+                    ),
+                  ),
+                  _isSending
+                      ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () async {
+                          final text = _controller.text.trim();
+                          if (text.isEmpty) return;
+                          setState(() => _isSending = true);
+                          try {
+                            await ref
+                                .read(sendMessageUseCaseProvider)
+                                .call(
+                                  roomId: widget.roomId,
+                                  senderId: uid,
+                                  text: text,
+                                );
+                            if (!mounted) return;
+                            _controller.clear();
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error sending: \$e')),
                             );
-                        if (!mounted) return;
-                        _controller.clear();
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error sending: \$e')),
-                        );
-                      } finally {
-                        if (mounted) setState(() => _isSending = false);
-                      }
-                    },
-                  ),
-            ],
-          ),
+                          } finally {
+                            if (mounted) setState(() => _isSending = false);
+                          }
+                        },
+                      ),
+                ],
+              ),
+            ),
+          ],
         ),
+
+        // Butonul “scroll to bottom”
+        if (_showScrollToBottom)
+          Positioned(
+            bottom: 80, // ridică puțin peste input
+            right: 16,
+            child: FloatingActionButton(
+              mini: true,
+              onPressed: _scrollToBottom,
+              child: const Icon(Icons.arrow_downward),
+            ),
+          ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // listen for new messages and scroll when they arrive
+    ref.listen<AsyncValue<List<Message>>>(
+      messagesProvider(widget.roomId),
+      (_, messages) => messages.whenData((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      }),
+    );
+
     final roomAsync = ref.watch(chatRoomStreamProvider(widget.roomId));
     final messagesAsync = ref.watch(messagesProvider(widget.roomId));
 

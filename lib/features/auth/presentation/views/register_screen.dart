@@ -61,9 +61,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.gradient3,
                   AppColors.gradient1,
                   AppColors.gradient2,
+                  AppColors.gradient3,
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -233,12 +233,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
 
                       const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: () => context.go('/login'),
-                        child: const Text(
-                          'Already have an account? Login',
-                          style: TextStyle(color: AppColors.whiteColor),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Already have an account? ',
+                            style: TextStyle(color: AppColors.whiteColor),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go('/login'),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(color: AppColors.gradient3),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

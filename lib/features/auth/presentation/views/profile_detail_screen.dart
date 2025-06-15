@@ -22,8 +22,8 @@ class ProfileDetailScreen extends ConsumerWidget {
     // Dacă nu avem niciun UID (numele user-ului e null), afișăm o pagină de eroare
     if (uidToShow == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profil')),
-        body: const Center(child: Text('Nu am putut identifica utilizatorul.')),
+        appBar: AppBar(title: const Text('Profile')),
+        body: const Center(child: Text('We could not identify the user.')),
       );
     }
 
@@ -85,6 +85,15 @@ class ProfileDetailScreen extends ConsumerWidget {
                         icon: const Icon(Icons.edit),
                         onPressed: () => context.push('/editProfile'),
                         tooltip: 'Edit profile',
+                      ),
+
+                      IconButton(
+                        icon: const Icon(Icons.logout),
+                        tooltip: 'Log out',
+                        onPressed: () {
+                          ref.read(authViewModelProvider.notifier).signOut();
+                          context.go('/login');
+                        },
                       ),
                     ]
                     : null,
@@ -211,7 +220,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () {
-                                  // Navighează spre ecranul de „Measurement Documents”
+                                  // Navighează spre ecranul de „Measurement Reports”
                                   GoRouter.of(
                                     context,
                                   ).push('/profile/$uidToShow/measurementDocs');
@@ -231,7 +240,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
-                                          'Measurement Documents',
+                                          'Measurements Reports',
                                           style: TextStyle(
                                             color: AppColors.whiteColor,
                                             fontSize: 16,

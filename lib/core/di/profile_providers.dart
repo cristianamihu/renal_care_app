@@ -20,7 +20,8 @@ final profileDocsForUserProvider = StreamProvider.autoDispose
                   return ProfileDocument(
                     id: doc.id,
                     name: data['name'] as String,
-                    url: data['url'] as String,
+                    url:
+                        (data['url'] as String?) ?? (data['content'] as String),
                     type: data['type'] as String,
                     addedAt: (data['addedAt'] as Timestamp).toDate(),
                   );

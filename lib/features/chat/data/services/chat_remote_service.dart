@@ -54,6 +54,8 @@ class ChatRemoteService {
     // salvăm JSON-ul modelului în Firestore
     await ref.set(room.toJson());
 
+    await _firestore.waitForPendingWrites();
+
     // returnăm modelul complet
     return room;
   }

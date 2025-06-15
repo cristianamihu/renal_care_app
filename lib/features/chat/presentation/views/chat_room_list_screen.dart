@@ -59,10 +59,28 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                     child:
                         rooms.isEmpty
                             ? Center(
-                              child: Text(
-                                isDoctor
-                                    ? 'Start a conversation by searching for a patient'
-                                    : 'No conversations yet',
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isDoctor
+                                        ? Icons.search
+                                        : Icons.chat_bubble_outline,
+                                    size: 80,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    isDoctor
+                                        ? 'Start a conversation by searching for a patient'
+                                        : 'No conversations yet',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
                             )
                             : ListView.builder(
@@ -211,7 +229,7 @@ class _ChatRoomListScreenState extends ConsumerState<ChatRoomListScreen> {
                                             ],
                                           ),
                                           onTap:
-                                              () => context.go(
+                                              () => context.push(
                                                 '/chat/${room.id}',
                                               ),
                                         );

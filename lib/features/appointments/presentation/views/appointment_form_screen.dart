@@ -41,8 +41,23 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
     final me = ref.read(authViewModelProvider).user!;
     _currentRole = me.role; // rolul din AuthState
 
-    if (_currentRole == 'patient') {
-      _loadDoctors(); // încarcă lista de doctori din Firestore
+    // dacă suntem în EDIT mode
+    if (widget.appointmentId != null) {
+      _loadAppointment().then((appt) {
+        if (appt != null) {
+          // completează formularul
+          _descCtrl.text = appt.description;
+          _pickedDateTime = appt.dateTime;
+          if (_currentRole == 'patient') {
+            _selectedDoctorId = appt.doctorId;
+            _selectedDoctorAddress = appt.doctorAddress;
+          }
+          setState(() {});
+        }
+      });
+    } else if (_currentRole == 'patient') {
+      // încărcăm lista de doctori doar când e NEW + pacient
+      _loadDoctors();
     }
   }
 
@@ -132,19 +147,13 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
 
       // next, make sure they've picked a date & time
       if (_pickedDateTime == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'You must select the date and time of the appointment.',
-            ),
-          ),
+        messenger.showSnackBar(
+          const SnackBar(content: Text('You must select the date and time.')),
         );
         return;
       }
-
-      // if patient, make sure a doctor is selected
       if (_currentRole == 'patient' && _selectedDoctorId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('You must select a doctor.')),
         );
         return;
@@ -169,11 +178,36 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
         doctorAddress: initial?.doctorAddress ?? _selectedDoctorAddress ?? '',
       );
 
-      final vm = ref.read(appointmentViewModelProvider.notifier);
+      // Verifică dacă doctorul are deja o programare în aceeaşi zi
+      final dayKey = DateFormat('yyyy-MM-dd').format(appt.dateTime);
+      final bookedSlots = await ref
+          .read(appointmentRepositoryProvider)
+          .getBookedSlots(appt.doctorId, dayKey);
+
+      if (initial != null) {
+        final mySlot = DateFormat('HH:mm').format(initial.dateTime);
+        bookedSlots.removeWhere((s) => s == mySlot);
+      }
+
+      // Dacă vrem să permitem editarea propriei programări, excludem self-slot-ul
+      final newSlot = DateFormat('HH:mm').format(appt.dateTime);
+      final conflict = bookedSlots.contains(newSlot);
+
+      if (conflict) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Doctorul are deja o programare în această zi. Alege o altă zi.',
+            ),
+          ),
+        );
+        return;
+      }
+
       if (initial == null) {
-        await vm.create(appt);
+        await ref.read(createAppointmentProvider)(appt);
       } else {
-        await vm.update(appt);
+        await ref.read(updateAppointmentProvider)(appt);
       }
 
       if (!mounted) return;
@@ -282,6 +316,12 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18),
+                  ),
                   onPressed: () async => await _onSave(initial),
                   child: Text(isEditing ? 'UPDATE' : 'CREATE'),
                 ),

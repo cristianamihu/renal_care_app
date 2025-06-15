@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
+import 'package:intl/intl.dart';
+import 'package:renal_care_app/features/home/domain/usecases/get_today_sleep.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.dart';
 import 'package:renal_care_app/features/home/domain/entities/measurement.dart';
 import 'package:renal_care_app/features/home/domain/entities/water_intake.dart';
 import 'package:renal_care_app/features/home/domain/entities/sleep_record.dart';
@@ -8,14 +12,12 @@ import 'package:renal_care_app/features/home/domain/usecases/add_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/add_water_glass.dart';
 import 'package:renal_care_app/features/home/domain/usecases/delete_allergy.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_measurements.dart';
-import 'package:renal_care_app/features/home/domain/usecases/get_sleep_history.dart';
 import 'package:renal_care_app/features/home/domain/usecases/list_allergies.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_measurement.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_water.dart';
 import 'package:renal_care_app/features/home/domain/usecases/update_sleep.dart';
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_state.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class MeasurementViewModel extends StateNotifier<MeasurementState> {
   final Ref _ref;
@@ -105,6 +107,21 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
     final newWater = WaterIntake(date: today, glasses: state.water.glasses + 1);
     await _updateWater(uid, newWater);
     state = state.copyWith(water: newWater);
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('measurement_documents')
+        .add({
+          'name':
+              'Water: ${newWater.glasses * state.glassSizeMl} ml at ${DateFormat('HH:mm').format(today)}',
+          'reportType': 'water',
+          'data': {
+            'glasses': newWater.glasses,
+            'ml': newWater.glasses * state.glassSizeMl,
+          },
+          'addedAt': Timestamp.now(),
+        });
   }
 
   Future<void> saveMeasurement(Measurement m) async {
@@ -112,18 +129,57 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
     final uid = _ref.read(authViewModelProvider).user!.uid;
     await _updateMeasurement(uid, m);
     state = state.copyWith(measurement: m, loading: false);
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('measurement_documents')
+        .add({
+          'name':
+              'Measurement at ${DateFormat('dd MMM yyyy HH:mm').format(m.date)}',
+          'reportType': 'measurements',
+          'data': {
+            'weight': m.weight,
+            'height': m.height,
+            'bmi': m.bmi,
+            'glucose': m.glucose,
+            'systolic': m.systolic,
+            'diastolic': m.diastolic,
+            'temperature': m.temperature,
+            'moment': m.moment,
+          },
+          'addedAt': Timestamp.now(),
+        });
   }
 
   Future<void> setSleep(double hours) async {
     final uid = _ref.read(authViewModelProvider).user!.uid;
-    final newSleep = SleepRecord(
-      date: DateTime.now(),
-      hours: hours,
-      start: DateTime.now(),
-      end: DateTime.now(),
-    );
+    final now = DateTime.now();
+
+    final totalMinutes = (hours * 60).round();
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+
+    final newSleep = SleepRecord(date: now, hours: hours, start: now, end: now);
     await _updateSleep(uid, newSleep);
     state = state.copyWith(sleep: newSleep);
+
+    final name = 'Sleep: $h h $m m on ${DateFormat('dd MMM yyyy').format(now)}';
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('measurement_documents')
+        .add({
+          'name': name,
+          'reportType': 'sleep',
+          'data': {
+            'hours': hours,
+            'start': Timestamp.fromDate(newSleep.start),
+            'end': Timestamp.fromDate(newSleep.end),
+          },
+          'addedAt': Timestamp.now(),
+        });
   }
 
   Future<void> updateWaterSettings(int goalMl, int glassSizeMl) async {
@@ -138,18 +194,45 @@ class MeasurementViewModel extends StateNotifier<MeasurementState> {
 
   Future<void> setSleepTimes(DateTime start, DateTime end, double hours) async {
     final uid = _ref.read(authViewModelProvider).user!.uid;
-    final today = DateTime.now();
-    // persist only hours if you like, or persist times in a new use-case
-    // salvezi în Firestore atât hours, cât și start/end
+    final recordDate = DateTime(start.year, start.month, start.day);
+
+    final totalMinutes = (hours * 60).round();
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+
     await _updateSleep(
       uid,
-      SleepRecord(date: today, hours: hours, start: start, end: end),
+      SleepRecord(date: recordDate, hours: hours, start: start, end: end),
     );
     state = state.copyWith(
-      sleep: SleepRecord(date: today, hours: hours, start: start, end: end),
+      sleep: SleepRecord(
+        date: recordDate,
+        hours: hours,
+        start: start,
+        end: end,
+      ),
       sleepStart: start,
       sleepEnd: end,
     );
+
+    final name =
+        'Sleep: $h h $m m on ${DateFormat('dd MMM yyyy').format(recordDate)}';
+
+    // loghezi documentul în Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('measurement_documents')
+        .add({
+          'name': name,
+          'reportType': 'sleep',
+          'data': {
+            'hours': hours,
+            'start': Timestamp.fromDate(start),
+            'end': Timestamp.fromDate(end),
+          },
+          'addedAt': Timestamp.now(),
+        });
   }
 
   /// Adaugă o nouă alergie și starea va fi actualizată automat

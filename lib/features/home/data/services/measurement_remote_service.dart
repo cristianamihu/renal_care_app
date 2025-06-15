@@ -114,4 +114,43 @@ class MeasurementRemoteService {
         .doc(allergyId)
         .delete();
   }
+
+  /// Fetch water history between două date
+  Future<List<WaterIntakeModel>> fetchWaterHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final fromTs = Timestamp.fromDate(from);
+    final toTs = Timestamp.fromDate(to);
+    final snap =
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('water')
+            .where('date', isGreaterThanOrEqualTo: fromTs)
+            .where('date', isLessThanOrEqualTo: toTs)
+            .get();
+    return snap.docs.map((d) => WaterIntakeModel.fromJson(d.data())).toList();
+  }
+
+  /// Fetch sleep records between two dates (inclusive)
+  Future<List<SleepRecordModel>> fetchSleepHistory(
+    String uid,
+    DateTime from,
+    DateTime to,
+  ) async {
+    // we name docs by yyyy-MM-dd, so we can query by ID
+    final fromKey = from.toIso8601String().split('T').first;
+    final toKey = to.toIso8601String().split('T').first;
+    final snap =
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('sleep')
+            .where(FieldPath.documentId, isGreaterThanOrEqualTo: fromKey)
+            .where(FieldPath.documentId, isLessThanOrEqualTo: toKey)
+            .get();
+    return snap.docs.map((d) => SleepRecordModel.fromJson(d.data())).toList();
+  }
 }
