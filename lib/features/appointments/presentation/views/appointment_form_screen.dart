@@ -318,7 +318,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
+                    backgroundColor: AppColors.gradient3,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     textStyle: const TextStyle(fontSize: 18),
                   ),

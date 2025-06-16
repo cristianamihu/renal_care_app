@@ -28,7 +28,10 @@ jobs:
       - name: Run tests
         run: flutter test --coverage
 
-      # opțional: build release dacă vrei
+      - name: Run integration tests
+        run: flutter test integration_test
+
+      # opțional: build release 
       #- name: Build Android APK
       #  run: flutter build apk --release
 

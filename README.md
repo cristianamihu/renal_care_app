@@ -16,14 +16,12 @@ Aplicatie mobilă Flutter dedicată pacienților cu afecțiuni renale, care ajut
 
 ## 📱 Funcționalități principale
 
-- Gestionarea programului de administrare a medicamentelor (notificări/alarme)
-- Evidența programărilor la medic și analize (calendar integrat)
+- Gestionarea programului de administrare a medicamentelor
+- Evidența programărilor la medic și analize
 - Monitorizarea cantității de apă consumate zilnic
-- Sugestii de regim alimentar și rețete permise
 - Hartă interactivă pentru localizarea spitalelor din apropiere
 - Jurnal zilnic pentru simptome și starea de sănătate
 - Sistem de chat securizat medic-pacient
-- Vizualizarea analizelor și recomandărilor medicale
 - Autentificare securizată (Firebase Authentication)
 
 ---
@@ -33,4 +31,3 @@ Aplicatie mobilă Flutter dedicată pacienților cu afecțiuni renale, care ajut
 - **Flutter** (Dart)
 - **Firebase** (Authentication, Firestore, Cloud Messaging)
 - **Google Maps API** (pentru hartă)
-- **Twilio** (pentru alerte SMS)
