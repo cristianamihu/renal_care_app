@@ -32,9 +32,20 @@ jobs:
       - name: Run tests
         run: flutter test --coverage
 
-      - name: Run integration tests on Chrome
-        run: flutter test -d chrome integration_test
+      #- name: Run integration tests on Android emulator
+         #run: flutter drive \
+           #--driver=integration_test/driver.dart \
+           #--target=integration_test/example_test.dart \
+           #-d emulator-5554
+
         #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
+      - name: Run integration tests on Chrome web
+        run: flutter drive \
+          --driver=integration_test/driver.dart \
+          --target=integration_test/example_test.dart \
+          -d web-server \
+          --browser-name=chrome
+
 
       # build release 
       - name: Build Android APK
