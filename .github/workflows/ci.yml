@@ -29,7 +29,7 @@ jobs:
         with:
           api-level: 31
           arch: x86
-          target: google_apis
+          target: default
           force-avd-creation: true
           script: echo "Emulator ready"
 
