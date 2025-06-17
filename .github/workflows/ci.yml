@@ -21,36 +21,40 @@ jobs:
         with:
           #flutter-version: 'stable'
           channel: stable
-          # flutter-version: 3.7.2
+          flutter-version: 3.7.2
 
+      # Pornim emulatorul Android
+      - name: Set up Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          script: echo "Emulator ready"
+
+      # Instalăm dependențe și analizăm codul
       - name: Install dependencies
         run: flutter pub get
 
       - name: Analyze
         run: flutter analyze
 
+      # Rulează unit & widget tests
       - name: Run tests
         run: flutter test --coverage
 
-      #- name: Run integration tests on Android emulator
-         #run: flutter drive \
-           #--driver=integration_test/driver.dart \
-           #--target=integration_test/example_test.dart \
-           #-d emulator-5554
+      # Rulează integration tests pe emulator
+      - name: Run integration tests on Android emulator
+        run: flutter drive \
+          --driver=integration_test/driver.dart \
+          --target=integration_test/example_test.dart \
+          -d emulator-5554
 
         #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
-      - name: Run integration tests on Chrome web
-        run: flutter drive \
-          --driver integration_test/driver.dart \
-          --target integration_test/example_test.dart \
-          -d web-server \
-          --browser-name=chrome
-
 
       # build release 
       - name: Build Android APK
         run: flutter build apk --release
 
+      # build & distribuie APK
       - name: Distribute to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
