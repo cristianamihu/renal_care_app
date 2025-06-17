@@ -34,4 +34,19 @@ jobs:
       - name: Run tests
         run: flutter test --coverage
 
-      
+      #- name: Run integration tests
+        #run: flutter test integration_test
+        #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
+
+      - name: Add google-services.json
+        run: |
+          mkdir -p android/app
+          mkdir -p android/app/src
+          mkdir -p android/app/src/release
+
+          cat << 'EOF' > android/app/google-services.json
+          ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EOF
+          
+          cp android/app/google-services.json android/app/src/google-services.json
+          cp android/app/google-services.json android/app/src/release/google-services.json
