@@ -29,10 +29,11 @@ jobs:
         with:
           api-level: 31
           arch: x86_64
-          target: default
+          target: google_apis
           force-avd-creation: true
-          emulator-options: -no-window -no-boot-anim -wipe-data
-          script: echo "Emulator ready"
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-audio -no-boot-anim -accel off
+          script: |
+            timeout 180 adb shell getprop sys.boot_completed | grep -m 1 '1'
 
       # Instalăm dependențe și analizăm codul
       - name: Install dependencies
