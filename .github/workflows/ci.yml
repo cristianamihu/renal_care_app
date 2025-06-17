@@ -28,8 +28,9 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
-          target: google_apis
-          arch: x86_64 
+          arch: x86_64
+          target: google_apis_playstore
+          force-avd-creation: true
           script: echo "Emulator ready"
 
       # Instalăm dependențe și analizăm codul
