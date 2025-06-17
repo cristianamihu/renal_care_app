@@ -41,8 +41,8 @@ jobs:
         #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
       - name: Run integration tests on Chrome web
         run: flutter drive \
-          --driver=integration_test/driver.dart \
-          --target=integration_test/example_test.dart \
+          --driver integration_test/driver.dart \
+          --target integration_test/example_test.dart \
           -d web-server \
           --browser-name=chrome
 
