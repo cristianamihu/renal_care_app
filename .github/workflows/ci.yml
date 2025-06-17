@@ -28,7 +28,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 31
-          arch: x86
+          arch: x86_64
           target: default
           force-avd-creation: true
           script: echo "Emulator ready"
