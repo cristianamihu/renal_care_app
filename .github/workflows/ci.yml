@@ -33,8 +33,8 @@ jobs:
         run: flutter test --coverage
 
       - name: Run integration tests
-        #run: flutter test integration_test
-        run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
+        run: flutter test integration_test
+        #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
 
       # build release 
       - name: Build Android APK
