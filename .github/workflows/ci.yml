@@ -43,9 +43,13 @@ jobs:
           mkdir -p android/app
           mkdir -p android/app/src
           mkdir -p android/app/src/release
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/src/google-services.json
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/src/release/google-services.json
+
+          cat << 'EOF' > android/app/google-services.json
+          ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EOF
+          
+          cp android/app/google-services.json android/app/src/google-services.json
+          cp android/app/google-services.json android/app/src/release/google-services.json
 
       # build release 
       - name: Build Android APK
