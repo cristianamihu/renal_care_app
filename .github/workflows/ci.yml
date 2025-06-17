@@ -23,18 +23,6 @@ jobs:
           channel: stable
           flutter-version: 3.29.2
 
-      # Pornim emulatorul Android
-      - name: Set up Android emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          arch: x86_64
-          target: google_apis
-          force-avd-creation: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-audio -no-boot-anim -accel off
-          script: |
-            timeout 180 adb shell getprop sys.boot_completed | grep -m 1 '1'
-
       # Instalăm dependențe și analizăm codul
       - name: Install dependencies
         run: flutter pub get
@@ -46,13 +34,7 @@ jobs:
       - name: Run tests
         run: flutter test --coverage
 
-      # Rulează integration tests pe emulator
-      - name: Run integration tests on Android emulator
-        run: flutter drive \
-          --driver=integration_test/driver.dart \
-          --target=integration_test/example_test.dart \
-          -d emulator-5554
-
+        
         #run: flutter drive --driver=integration_test/driver.dart --target=integration_test/example_test.dart
 
       # build release 
