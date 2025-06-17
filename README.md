@@ -26,7 +26,7 @@ Aplicatie mobilă Flutter dedicată pacienților cu afecțiuni renale, care ajut
 
 ---
 
-## 🔥 Tehnologii folosite
+## Tehnologii folosite
 
 - **Flutter** (Dart)
 - **Firebase** (Authentication, Firestore, Cloud Messaging)
