@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+//import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
+//import 'package:renal_care_app/core/utils/seed_restricted_foods.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -104,7 +106,21 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  //await dotenv.load(fileName: ".env");
+
   await Firebase.initializeApp();
+  //options: FirebaseOptions(
+  //apiKey: dotenv.env['FIREBASE_API_KEY']!,
+  //appId: dotenv.env['FIREBASE_APP_ID']!,
+  //messagingSenderId: dotenv.env['FIREBASE_SENDER_ID']!,
+  //projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+  //storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
+  //),
+  //);
+
+  // populează o singură dată lista de alimente
+  //await seedRestrictedFoods();
 
   // initialize timezone database
   tz.initializeTimeZones();

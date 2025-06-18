@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:renal_care_app/core/theme/app_colors.dart';
 import 'package:renal_care_app/features/home/presentation/viewmodels/measurement_viewmodel.dart';
 
 class AllergyForm extends ConsumerStatefulWidget {
@@ -33,6 +34,14 @@ class _AllergyFormState extends ConsumerState<AllergyForm> {
         ),
         const SizedBox(height: 12),
         ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.gradient3,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          ),
           label: const Text('ADD'),
           onPressed: () {
             final name = _ctrl.text.trim();

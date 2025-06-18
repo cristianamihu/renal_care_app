@@ -19,6 +19,7 @@ import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_state.
 import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/chat/presentation/views/chat_screen.dart';
 import 'package:renal_care_app/features/emergency/presentation/views/emergency_screen.dart';
+import 'package:renal_care_app/features/home/presentation/views/restricted_food_search_screen.dart';
 import 'package:renal_care_app/features/journal/presentation/views/journal_list_screen.dart';
 import 'package:renal_care_app/features/home/presentation/views/measurements_screen.dart';
 import 'package:renal_care_app/features/medications/presentation/views/add_edit_medication_screen.dart';
@@ -110,6 +111,11 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
           final otherUid = state.pathParameters['userId']!;
           return MainScaffold(child: ProfileDetailScreen(userId: otherUid));
         },
+      ),
+
+      GoRoute(
+        path: '/restricted-foods',
+        builder: (_, __) => const RestrictedFoodSearchScreen(),
       ),
 
       // "Home" repurposed → MeasurementsScreen

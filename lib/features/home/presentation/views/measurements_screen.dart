@@ -300,6 +300,87 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Boton căutare alimente interzise
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.gradient3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 6,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      icon: const Icon(Icons.restaurant, color: Colors.white),
+                      label: const Text(
+                        'Check restricted foods',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      onPressed: () {
+                        // dacă folosești go_router:
+                        context.go('/restricted-foods');
+
+                        // altfel, cu Navigator:
+                        // Navigator.of(context).push(
+                        //   MaterialPageRoute(builder: (_) => const RestrictedFoodSearchScreen()),
+                        // );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Allergy Card
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  child: ListTile(
+                    leading: const Icon(Icons.warning, color: Colors.redAccent),
+                    title: const Text('Allergies'),
+                    subtitle:
+                        state.allergies.isEmpty
+                            ? const Text(
+                              'None added',
+                              style: TextStyle(color: Colors.grey),
+                            )
+                            : Wrap(
+                              spacing: 8,
+                              children:
+                                  state.allergies.map((a) {
+                                    return Chip(
+                                      label: Text(a.name),
+                                      onDeleted: () => vm.deleteAllergy(a.id),
+                                    );
+                                  }).toList(),
+                            ),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder:
+                            (ctx) => AlertDialog(
+                              content: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: AllergyForm(vm: vm),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+
                 // Sleep Card
                 Card(
                   shape: RoundedRectangleBorder(
@@ -381,52 +462,6 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Allergy Card
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  child: ListTile(
-                    leading: const Icon(Icons.warning, color: Colors.redAccent),
-                    title: const Text('Allergies'),
-                    subtitle:
-                        state.allergies.isEmpty
-                            ? const Text(
-                              'None added',
-                              style: TextStyle(color: Colors.grey),
-                            )
-                            : Wrap(
-                              spacing: 8,
-                              children:
-                                  state.allergies.map((a) {
-                                    return Chip(
-                                      label: Text(a.name),
-                                      onDeleted: () => vm.deleteAllergy(a.id),
-                                    );
-                                  }).toList(),
-                            ),
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (ctx) => AlertDialog(
-                              content: Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: AllergyForm(vm: vm),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(),
-                                  child: const Text('Close'),
-                                ),
-                              ],
-                            ),
-                      );
-                    },
-                  ),
-                ),
               ],
             ),
           ),

@@ -94,8 +94,10 @@ dependencies:
 
   intl: ^0.20.0
 
-  # Pentru încărcarea fișierelor .env (dev/staging/prod)
+  # Pentru încărcarea fișierelor .env
   flutter_dotenv: ^5.2.0
+
+  diacritic: ^0.1.6
 
 
 dev_dependencies:
