@@ -229,19 +229,19 @@ class _FrequencyPickerState extends State<FrequencyPicker> {
   String _weekdayName(int weekday) {
     switch (weekday) {
       case DateTime.monday:
-        return 'Luni';
+        return 'Monday';
       case DateTime.tuesday:
-        return 'Marți';
+        return 'Tuesday';
       case DateTime.wednesday:
-        return 'Miercuri';
+        return 'Wednesday';
       case DateTime.thursday:
-        return 'Joi';
+        return 'Thursday';
       case DateTime.friday:
-        return 'Vineri';
+        return 'Friday';
       case DateTime.saturday:
-        return 'Sâmbătă';
+        return 'Saturday';
       case DateTime.sunday:
-        return 'Duminică';
+        return 'Sunday';
       default:
         return '';
     }

@@ -18,10 +18,7 @@ class SavedDocumentsScreen extends ConsumerWidget {
   /// Dacă userId e null, înseamnă „documentele user-ului curent”
   final String? userId;
 
-  /// Dacă canDelete == false, nu afișăm butonul de ștergere
-  final bool canDelete;
-
-  const SavedDocumentsScreen({super.key, this.userId, this.canDelete = true});
+  const SavedDocumentsScreen({super.key, this.userId});
 
   Future<void> _openDocument(
     BuildContext context,
@@ -103,6 +100,9 @@ class SavedDocumentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUid = ref.read(authViewModelProvider).user!.uid;
+    final isOwnProfile = userId == null || userId == currentUid;
+
     final uidToLoad = userId ?? ref.read(authViewModelProvider).user!.uid;
     final docsAsync = ref.watch(profileDocsForUserProvider(uidToLoad));
 
@@ -125,6 +125,7 @@ class SavedDocumentsScreen extends ConsumerWidget {
         ),
         title: const Text('Saved Documents'),
       ),
+
       body: docsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error:
@@ -201,22 +202,45 @@ class SavedDocumentsScreen extends ConsumerWidget {
                 },
                 // Dacă canDelete e false, nu afișăm butonul de ștergere
                 trailing:
-                    canDelete
+                    isOwnProfile
                         ? IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Color.fromARGB(255, 255, 255, 255),
-                          ),
+                          icon: const Icon(Icons.delete, color: Colors.white),
                           onPressed: () async {
-                            // Șterge documentul din Firestore
-                            final uid =
-                                ref.read(authViewModelProvider).user!.uid;
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(uid)
-                                .collection('profile_documents')
-                                .doc(d.id)
-                                .delete();
+                            final shouldDelete = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (ctx) => AlertDialog(
+                                    title: const Text('Delete note?'),
+                                    content: const Text(
+                                      'Are you sure you want to delete this note?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(ctx).pop(false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.of(ctx).pop(true),
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                            if (shouldDelete == true) {
+                              final uid =
+                                  ref.read(authViewModelProvider).user!.uid;
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(uid)
+                                  .collection('journal_documents')
+                                  .doc(d.id)
+                                  .delete();
+                            }
                           },
                         )
                         : null,

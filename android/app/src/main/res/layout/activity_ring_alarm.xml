@@ -13,12 +13,25 @@
 
         <TextView
             android:id="@+id/alarmText"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center" 
+            android:textAlignment="center" 
             android:text="⏰ It's time to take your medication!"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/medsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAlignment="center"
+            android:textColor="#FFF"
+            android:textSize="18sp"
+            android:layout_marginBottom="32dp"
+            android:text="Medication A - 50mg\nMedication B - 10ml"/>
 
         <Button
             android:id="@+id/stopAlarmButton"

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:renal_care_app/core/di/medication_provider.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
+import 'package:renal_care_app/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:renal_care_app/features/medications/domain/entities/medication.dart';
 import 'package:renal_care_app/features/medications/presentation/widgets/frequency_piker.dart';
 
@@ -129,8 +130,6 @@ class _AddEditMedicationScreenState
       return;
     }
 
-    final medVM = ref.read(medicationViewModelProvider.notifier);
-
     final name = _nameController.text.trim();
     final dose = double.tryParse(_doseController.text.trim()) ?? 0.0;
     final unit = _unitController.text.trim();
@@ -193,11 +192,17 @@ class _AddEditMedicationScreenState
     );
 
     try {
+      final uid = ref.read(authViewModelProvider).user!.uid;
+
       if (widget.initialMedication == null) {
-        await medVM.addNewMedication(newMed);
+        await ref.read(addMedicationUseCaseProvider).call(uid, newMed);
       } else {
-        await medVM.updateExistingMedication(newMed);
+        await ref.read(updateMedicationUseCaseProvider).call(uid, newMed);
       }
+
+      // forțăm reîncărcarea listei când ne întoarcem
+      ref.invalidate(medicationViewModelProvider);
+
       if (!mounted) return;
       context.go('/medications');
     } catch (e) {

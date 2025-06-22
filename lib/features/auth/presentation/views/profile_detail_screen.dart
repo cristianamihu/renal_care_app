@@ -77,6 +77,15 @@ class ProfileDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            // dacă nu e profilul propriu, vrem back‐arrow
+            automaticallyImplyLeading: !isOwnProfile,
+            leading:
+                isOwnProfile
+                    ? null
+                    : IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => context.pop(),
+                    ),
             title: Text(isOwnProfile ? 'Profile' : user.name),
             actions:
                 isOwnProfile
@@ -163,10 +172,11 @@ class ProfileDetailScreen extends ConsumerWidget {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () {
-                                  // Navighează spre ecranul de „Saved Documents”
-                                  GoRouter.of(
-                                    context,
-                                  ).push('/profile/$uidToShow/savedDocs');
+                                  final route =
+                                      isOwnProfile
+                                          ? '/profile/savedDocs'
+                                          : '/profile/$uidToShow/savedDocs';
+                                  GoRouter.of(context).push(route);
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(

@@ -11,6 +11,7 @@ import android.widget.TextView
 class RingAlarmActivity : Activity() {
     companion object {
         const val ACTION_TAKEN = "com.example.renal_care_app.ACTION_TAKEN"
+        const val ACTION_RING = "com.example.renal_care_app.ACTION_RING"
     }
 
     private var mediaPlayer: MediaPlayer? = null
@@ -40,6 +41,10 @@ class RingAlarmActivity : Activity() {
             isLooping = true
             start()
         }
+
+        // Populează lista de medicamente
+        val medsDesc = intent.getStringExtra("medsDescription") ?: ""
+        findViewById<TextView>(R.id.medsText).text = medsDesc
 
         // Butonul “Oprește alarma”
         val stopButton: Button = findViewById(R.id.stopAlarmButton)

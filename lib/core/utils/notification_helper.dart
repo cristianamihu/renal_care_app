@@ -1,9 +1,15 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationHelper {
   // Instanță singleton
   static late FlutterLocalNotificationsPlugin plugin;
+  static const MethodChannel _alarmChannel = MethodChannel(
+    'renal_care_app/alarms',
+  );
   static void setPlugin(FlutterLocalNotificationsPlugin p) => plugin = p;
 
   /// Initializează plugin-ul de notificări. Apelează-l în main() înainte de runApp()
@@ -41,6 +47,28 @@ class NotificationHelper {
     required DateTime scheduledTime,
     required String medsDescription,
   }) async {
+    // Convertim în TZDateTime
+    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final tz.TZDateTime scheduledTzDate = tz.TZDateTime.from(
+      scheduledTime,
+      tz.local,
+    );
+
+    // Dacă data/oră e deja în trecut, nu programăm
+    if (scheduledTzDate.isBefore(now)) {
+      return;
+    }
+
+    if (Platform.isAndroid) {
+      // Delegate to your native AlarmManager full-screen alarm
+      await _alarmChannel.invokeMethod('scheduleFullScreenAlarm', {
+        'notificationId': notificationId,
+        'epochMillis': scheduledTime.millisecondsSinceEpoch,
+        'medsDescription': medsDescription,
+      });
+      return;
+    }
+
     final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
           'medication_alarm_channel',
@@ -48,15 +76,16 @@ class NotificationHelper {
           channelDescription: 'Medication alarm channel',
           importance: Importance.max,
           priority: Priority.high,
-          fullScreenIntent: true, // forțează RingAlarmActivity în prim plan
+          fullScreenIntent: true,
           ongoing: true,
           autoCancel: false,
 
           // acţiunea “Taken”
           actions: <AndroidNotificationAction>[
             AndroidNotificationAction(
-              'com.example.renal_care_app.ACTION_TAKEN', // actionId
+              'ACTION_TAKEN', // actionId
               'Taken', // butonul propriu-zis
+              showsUserInterface: true,
             ),
           ],
         );
@@ -71,22 +100,10 @@ class NotificationHelper {
       iOS: iosDetails,
     );
 
-    // Convertim în TZDateTime
-    tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    final tz.TZDateTime scheduledTzDate = tz.TZDateTime.from(
-      scheduledTime,
-      tz.local,
-    );
-
-    // Dacă data/oră e deja în trecut, nu programăm
-    if (scheduledTzDate.isBefore(now)) {
-      return;
-    }
-
     await plugin.zonedSchedule(
       notificationId,
       "⏰ It's time to take your medication!",
-      medsDescription, // body: lista medicamentelor
+      medsDescription,
       scheduledTzDate,
       platformDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -106,5 +123,47 @@ class NotificationHelper {
   /// în modul acesta simplificat vom anula TOT și vom reprograma din nou toate alarmele).
   static Future<void> cancelAlarmById(int notificationId) async {
     await plugin.cancel(notificationId);
+  }
+
+  /// NOTIFICĂRI PUSH simple (programări – 24 h înainte)
+  static Future<void> scheduleAppointmentNotification({
+    required int notificationId,
+    required DateTime scheduledTime,
+    required String title,
+    required String body,
+  }) async {
+    final androidDetails = AndroidNotificationDetails(
+      'appointment_channel',
+      'Appointment Reminders',
+      channelDescription: 'Appointment reminder notifications',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+      playSound: true,
+      ongoing: false,
+      autoCancel: true,
+    );
+    final iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+    );
+    final platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final tzScheduled = tz.TZDateTime.from(scheduledTime, tz.local);
+    if (tzScheduled.isBefore(tz.TZDateTime.now(tz.local))) return;
+
+    await plugin.zonedSchedule(
+      notificationId,
+      title,
+      body,
+      tzScheduled,
+      platformDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: notificationId.toString(),
+    );
   }
 }

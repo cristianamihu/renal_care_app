@@ -97,9 +97,46 @@ class AppointmentsScreen extends ConsumerWidget {
                                   : null,
                           onDelete:
                               isPatient
-                                  ? () => ref.read(deleteAppointmentProvider)(
-                                    appt.id,
-                                  )
+                                  ? () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder:
+                                          (ctx) => AlertDialog(
+                                            title: const Text(
+                                              'Delete appointment?',
+                                            ),
+                                            content: const Text(
+                                              'Are you sure you want to delete this appointment?',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      ctx,
+                                                    ).pop(false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.of(
+                                                      ctx,
+                                                    ).pop(true),
+                                                child: const Text(
+                                                  'Delete',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                    if (confirmed == true) {
+                                      await ref.read(deleteAppointmentProvider)(
+                                        appt.id,
+                                      );
+                                    }
+                                  }
                                   : null,
                         ),
                   );

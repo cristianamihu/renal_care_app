@@ -17,6 +17,8 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:ignore="ProtectedPermissions"/>
@@ -55,8 +57,13 @@
             android:turnScreenOn="true"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance">
+            <!-- pentru butonul “Taken” -->
             <intent-filter>
                 <action android:name="com.example.renal_care_app.ACTION_TAKEN"/>
+            </intent-filter>
+            <!-- pentru lansarea full-screen când sună alarma -->
+            <intent-filter>
+                <action android:name="com.example.renal_care_app.ACTION_RING"/>
             </intent-filter>
         </activity>
 
@@ -71,6 +78,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyC5P7W7EMfx3O0axZaECuYZBkrNCIuqFMw"/>
             
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="alarm_channel"/>
+
         <!-- FCM service -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
@@ -80,6 +91,10 @@
             </intent-filter>
         </service>
         
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false"/>
+
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false"/>

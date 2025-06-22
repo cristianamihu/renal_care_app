@@ -151,3 +151,30 @@ final lastMessageProvider = FutureProvider.family<Message?, String>((
   final repo = ref.watch(chatRepositoryProvider);
   return repo.getLastMessage(roomId);
 });
+
+/// Numărul de camere de chat cu mesaje necitite
+final unreadChatRoomsCountProvider = StreamProvider.autoDispose<int>((ref) {
+  final user = ref.watch(authViewModelProvider).user!;
+  return FirebaseFirestore.instance
+      .collection('chat_rooms')
+      .where('participants', arrayContains: user.uid)
+      .snapshots()
+      .asyncMap((snap) {
+        int unread = 0;
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          // timestamp-ul ultimului mesaj
+          final lastMsgAt = (data['lastMessageAt'] as Timestamp).toDate();
+          // harta cu ultima citire
+          final lastReadMap = (data['lastRead'] as Map<String, dynamic>?) ?? {};
+          final lastReadTs =
+              lastReadMap[user.uid] != null
+                  ? (lastReadMap[user.uid] as Timestamp).toDate()
+                  : DateTime.fromMillisecondsSinceEpoch(0);
+          if (lastMsgAt.isAfter(lastReadTs)) {
+            unread++;
+          }
+        }
+        return unread;
+      });
+});

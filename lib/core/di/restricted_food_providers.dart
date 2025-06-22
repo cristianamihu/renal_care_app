@@ -26,8 +26,9 @@ final getRestrictedFoodsUseCaseProvider = Provider(
 
 // Provider
 final restrictedFoodViewModelProvider =
-    StateNotifierProvider<RestrictedFoodViewModel, RestrictedFoodState>((ref) {
-      return RestrictedFoodViewModel(
-        ref.read(getRestrictedFoodsUseCaseProvider),
-      );
-    });
+    StateNotifierProvider<RestrictedFoodViewModel, RestrictedFoodState>(
+      (ref) => RestrictedFoodViewModel(
+        ref,
+        ref.watch(getRestrictedFoodsUseCaseProvider),
+      ),
+    );

@@ -96,11 +96,26 @@ final appRouterProvider = Provider.family<GoRouter, GlobalKey<NavigatorState>>((
       ),
 
       //documentele salvate
+      // Ruta pentru propriul “Saved Documents”, fără parametru userId
+      GoRoute(
+        path: '/profile/savedDocs',
+        builder:
+            (ctx, state) => MainScaffold(
+              child:
+                  SavedDocumentsScreen(), // userId == null → isOwnProfile == true
+            ),
+      ),
+
+      // Ruta pentru saved docs ale altui user
       GoRoute(
         path: '/profile/:userId/savedDocs',
-        builder: (context, state) {
+        builder: (ctx, state) {
           final otherUid = state.pathParameters['userId']!;
-          return SavedDocumentsScreen(userId: otherUid, canDelete: false);
+          return MainScaffold(
+            child: SavedDocumentsScreen(
+              userId: otherUid, // userId != currentUid → isOwnProfile == false
+            ),
+          );
         },
       ),
 

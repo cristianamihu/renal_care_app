@@ -52,7 +52,7 @@ class WeeklyCalendarState extends State<WeeklyCalendar> {
         selectedDate.day == now.day;
     final String label =
         isToday
-            ? 'Azi, ${selectedDate.day} ${_monthAbbr(selectedDate.month)}'
+            ? 'Today, ${selectedDate.day} ${_monthAbbr(selectedDate.month)}'
             : '${_weekdayAbbr(selectedDate.weekday)}, ${selectedDate.day} ${_monthAbbr(selectedDate.month)}';
 
     return Container(
@@ -174,19 +174,19 @@ class WeeklyCalendarState extends State<WeeklyCalendar> {
   String _weekdayAbbr(int weekday) {
     switch (weekday) {
       case DateTime.monday:
-        return 'lun.';
+        return 'Mon';
       case DateTime.tuesday:
-        return 'mar.';
+        return 'Tue';
       case DateTime.wednesday:
-        return 'mie.';
+        return 'Wed';
       case DateTime.thursday:
-        return 'joi';
+        return 'Thu';
       case DateTime.friday:
-        return 'vin.';
+        return 'Fri';
       case DateTime.saturday:
-        return 'sâm.';
+        return 'Sat';
       case DateTime.sunday:
-        return 'dum.';
+        return 'Sun';
       default:
         return '';
     }
@@ -194,18 +194,18 @@ class WeeklyCalendarState extends State<WeeklyCalendar> {
 
   String _monthAbbr(int month) {
     const names = [
-      'ian.',
-      'feb.',
-      'mar.',
-      'apr.',
-      'mai',
-      'iun.',
-      'iul.',
-      'aug.',
-      'sep.',
-      'oct.',
-      'nov.',
-      'dec.',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return names[month - 1];
   }

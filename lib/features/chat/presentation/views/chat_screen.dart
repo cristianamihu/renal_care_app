@@ -44,10 +44,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     // show/hide “scroll to bottom” button
     _scrollController.addListener(() {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      final curScroll = _scrollController.offset;
       const threshold = 200.0;
-      final shouldShow = (maxScroll - curScroll) > threshold;
+      final curScroll = _scrollController.offset;
+      final shouldShow = curScroll > threshold;
       if (shouldShow != _showScrollToBottom) {
         setState(() => _showScrollToBottom = shouldShow);
       }
@@ -62,13 +61,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    // ascunde butonul imediat ce sărim jos
+    setState(() => _showScrollToBottom = false);
   }
 
   /// Metoda apelată când dai tap pe icon-ul de atașare document
@@ -152,7 +152,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.go('/profile/$userId'),
+        onTap: () => context.push('/profile/$userId'),
         onHighlightChanged: (isPressed) {
           setState(() {
             _profileLinkPressed = isPressed;
@@ -253,13 +253,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                                   ).pop(false),
                                               child: const Text('Cancel'),
                                             ),
-
                                             TextButton(
                                               onPressed:
                                                   () => Navigator.of(
                                                     ctx,
                                                   ).pop(true),
-                                              child: const Text('Delete'),
+                                              child: const Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),

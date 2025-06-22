@@ -17,5 +17,8 @@ class AlarmPermission {
         action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
       ).launch();
     }
+
+    // solicită excluderea din optimizările de baterie
+    await _channel.invokeMethod('requestIgnoreBatteryOptimizations');
   }
 }

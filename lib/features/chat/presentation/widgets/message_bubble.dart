@@ -76,12 +76,12 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Salvat în: $targetPath')));
+      ).showSnackBar(SnackBar(content: Text('Saved in: $targetPath')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Eroare la salvare: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
     }
   }
 
@@ -101,7 +101,7 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
               children: [
                 ListTile(
                   leading: const Icon(Icons.open_in_new),
-                  title: const Text('Deschide'),
+                  title: const Text('Open'),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _openDocument(url);
@@ -110,7 +110,7 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
 
                 ListTile(
                   leading: const Icon(Icons.download),
-                  title: const Text('Salvează'),
+                  title: const Text('Save'),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _saveToRenalCare(
@@ -122,7 +122,7 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
 
                 ListTile(
                   leading: const Icon(Icons.person_add_alt_1),
-                  title: const Text('Adaugă în profil'),
+                  title: const Text('Add to profile'),
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _addToProfile(url: url, name: filename, type: mimeType);
@@ -159,7 +159,7 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Trebuie să fii autentificat ca să salvezi în profil'),
+          content: Text('You must be logged in to save to profile.'),
         ),
       );
       return;
@@ -182,13 +182,13 @@ class _MessageBubbleState extends ConsumerState<MessageBubble>
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fișier adăugat în profil cu succes')),
+        const SnackBar(content: Text('File added to profile successfully')),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Eroare la salvarea în profil: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error saving to profile: $e')));
     }
   }
 

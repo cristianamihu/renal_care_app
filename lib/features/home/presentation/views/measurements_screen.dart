@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'package:renal_care_app/core/di/chat_providers.dart';
 
 import 'package:renal_care_app/core/di/measurements_providers.dart';
 import 'package:renal_care_app/core/theme/app_colors.dart';
@@ -24,6 +25,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(measurementViewModelProvider);
     final vm = ref.read(measurementViewModelProvider.notifier);
+    // urmărește numărul de chat rooms cu mesaje necitite
+    final unreadAsync = ref.watch(unreadChatRoomsCountProvider);
 
     if (state.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -43,7 +46,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           _lastBackPress = now;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Apasă din nou pentru a ieși din aplicație'),
+              content: Text('Press again to exit the application.'),
               duration: Duration(seconds: 2),
             ),
           );
@@ -81,10 +84,59 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             iconTheme: const IconThemeData(color: Colors.white),
             actions: [
               // butonul de chat
-              IconButton(
-                icon: const Icon(Icons.chat_bubble_outline),
-                tooltip: 'Chat',
-                onPressed: () => context.go('/chat'),
+              unreadAsync.when(
+                data: (count) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          tooltip: 'Chat',
+                          onPressed: () => context.go('/chat'),
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: AppColors.gradient2,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+                loading:
+                    () => IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline),
+                      tooltip: 'Chat',
+                      onPressed: () => context.go('/chat'),
+                    ),
+                error:
+                    (_, __) => IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline),
+                      tooltip: 'Chat',
+                      onPressed: () => context.go('/chat'),
+                    ),
               ),
             ],
           ),

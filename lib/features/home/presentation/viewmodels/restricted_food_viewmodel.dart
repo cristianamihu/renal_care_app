@@ -1,13 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:diacritic/diacritic.dart';
 
+import 'package:renal_care_app/core/di/measurements_providers.dart';
+import 'package:renal_care_app/features/home/data/services/barcode_product_service.dart';
 import 'package:renal_care_app/features/home/domain/usecases/get_restricted_foods.dart';
 import 'package:renal_care_app/features/home/presentation/viewmodels/restricted_food_state.dart';
 
 class RestrictedFoodViewModel extends StateNotifier<RestrictedFoodState> {
+  final Ref _ref;
   final GetRestrictedFoods _getAll;
+  final _barcodeService = BarcodeProductService();
 
-  RestrictedFoodViewModel(this._getAll) : super(RestrictedFoodState()) {
+  RestrictedFoodViewModel(this._ref, this._getAll)
+    : super(RestrictedFoodState()) {
     _load();
   }
 
@@ -20,6 +25,9 @@ class RestrictedFoodViewModel extends StateNotifier<RestrictedFoodState> {
       state = state.copyWith(loading: false, error: e.toString());
     }
   }
+
+  /// Metodă publică pentru retry
+  Future<void> reload() => _load();
 
   /// Caută în "all", apoi setează "filtered" și "resultMessage"
   Future<void> search(String query) async {
@@ -70,6 +78,52 @@ class RestrictedFoodViewModel extends StateNotifier<RestrictedFoodState> {
       loading: false,
       resultMessage: resultMsg,
     );
+  }
+
+  Future<void> scanBarcodeAndCheck(String code) async {
+    state = state.copyWith(loading: true, resultMessage: null);
+    try {
+      final ingredients = await _barcodeService.fetchIngredients(code);
+
+      if (ingredients.isEmpty) {
+        // nu avem ingrediente → poate cod invalid sau produs necunoscut
+        state = state.copyWith(
+          loading: false,
+          resultMessage: '❌ Could not fetch ingredients for this barcode.',
+        );
+        return;
+      }
+
+      // verifică listei de alimente restricționate
+      final bads = <String>[];
+      for (final f in state.all) {
+        if (ingredients.any(
+          (ing) => ing.toLowerCase().contains(f.name.toLowerCase()),
+        )) {
+          bads.add(f.name);
+        }
+      }
+
+      // verifică alergiile utilizatorului (din MeasurementViewModel)
+      final alergii = _ref
+          .read(measurementViewModelProvider)
+          .allergies
+          .map((a) => a.name.toLowerCase());
+      for (final alerg in alergii) {
+        if (ingredients.any((ing) => ing.toLowerCase().contains(alerg))) {
+          bads.add(alerg);
+        }
+      }
+
+      final msg =
+          bads.isEmpty
+              ? '✅ The product is safe for you.'
+              : '❌ Contain: ${bads.toSet().join(', ')}';
+
+      state = state.copyWith(loading: false, resultMessage: msg);
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+    }
   }
 
   /// Resetează rezultatul (ex. când ctrl-ul text se golește)

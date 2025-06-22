@@ -59,7 +59,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Profil actualizat cu succes!'),
+              content: Text('Profile updated successfully!'),
               duration: Duration(milliseconds: 800),
             ),
           );

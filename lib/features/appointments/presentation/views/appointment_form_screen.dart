@@ -197,7 +197,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
         messenger.showSnackBar(
           const SnackBar(
             content: Text(
-              'Doctorul are deja o programare în această zi. Alege o altă zi.',
+              'The doctor already has an appointment at this time. Please choose a different time of day or another day.',
             ),
           ),
         );

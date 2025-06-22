@@ -7,6 +7,7 @@ class UserModel {
   final String name;
   final String email;
   final String role;
+  final String? fcmToken;
   final String? phone;
   final String? county;
   final String? city;
@@ -20,6 +21,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.role,
+    this.fcmToken,
     this.phone,
     this.county,
     this.city,
@@ -37,6 +39,7 @@ class UserModel {
       name: data['name'] as String,
       email: data['email'] as String,
       role: data['role'] as String,
+      fcmToken: data['fcmToken'] as String?,
       phone: data['phone'] as String?,
       county: data['county'],
       city: data['city'],
@@ -62,6 +65,7 @@ class UserModel {
     'name': name,
     'email': email,
     'role': role,
+    if (fcmToken != null) 'fcmToken': fcmToken,
     if (phone != null) 'phone': phone,
     if (county != null) 'county': county,
     if (city != null) 'city': city,
