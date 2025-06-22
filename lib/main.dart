@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 //import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -110,17 +113,36 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  //await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: ".env"); // încarci .env
 
-  await Firebase.initializeApp();
-  //options: FirebaseOptions(
-  //apiKey: dotenv.env['FIREBASE_API_KEY']!,
-  //appId: dotenv.env['FIREBASE_APP_ID']!,
-  //messagingSenderId: dotenv.env['FIREBASE_SENDER_ID']!,
-  //projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
-  //storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
-  //),
-  //);
+  // citire din dart-define (dacă există), altfel din .env
+  String getEnv(String key) {
+    // dart-define
+    var fromDefine = String.fromEnvironment(key, defaultValue: '');
+    if (fromDefine.isNotEmpty) return fromDefine;
+    // .env
+    final fromDotenv = dotenv.env[key];
+    if (fromDotenv == null) {
+      throw Exception('Missing environment variable: $key');
+    }
+    return fromDotenv;
+  }
+
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: getEnv('FIREBASE_API_KEY'),
+      appId: getEnv('FIREBASE_APP_ID'),
+      messagingSenderId: getEnv('FIREBASE_SENDER_ID'),
+      projectId: getEnv('FIREBASE_PROJECT_ID'),
+      storageBucket: getEnv('FIREBASE_STORAGE_BUCKET'),
+    ),
+  );
+
+  const useEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
+  if (useEmulator) {
+    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
+  }
 
   // populează o singură dată lista de alimente
   //await seedRestrictedFoods();

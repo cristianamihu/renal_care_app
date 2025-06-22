@@ -1,0 +1,26 @@
+name: Test Firestore Rules
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+
+jobs:
+  rules-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out codul
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Instalare dependințe
+        run: npm ci
+
+      - name: Pornire emulator & rulare teste
+        # folosește ``--only firestore`` dacă vrei doar emulatorul Firestore
+        run: |
+          npx firebase emulators:exec --only firestore "npm run test:rules"

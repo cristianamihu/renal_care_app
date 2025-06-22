@@ -1,0 +1,219 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+   
+  	function isDoctor() {
+      return request.auth != null && request.auth.token.role == 'doctor';
+    }
+    
+    function isPatientOf(doctorId) {
+      let a = doctorId + '_' + request.auth.uid;
+      let b = request.auth.uid + '_' + doctorId;
+      return exists(/databases/$(database)/documents/chat_rooms/$(a))
+          || exists(/databases/$(database)/documents/chat_rooms/$(b));
+    }
+    
+    // Permite doctorului (sau pacientului) să citească slot‐urile prin collectionGroup
+    match /{path=**}/slots/{slotId} {
+      allow read: if request.auth.uid == resource.data.doctorId
+        || request.auth.uid == resource.data.patientId
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    }
+    
+    match /restricted_foods/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // regula pentru profiluri de user
+    match /users/{userId} {
+      allow get: if request.auth.uid == userId; 
+      allow list: if request.auth.uid != null; 
+      allow read: if request.auth.uid != null;
+    	
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    
+    	// Jurnal de notițe – doar propriul user
+      match /journal/{entryId} {
+        allow read: if request.auth.uid == userId || isDoctor();
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+    
+    	 // Măsurători generale – doar propriul user
+      match /measurements/{measurementId} {
+        allow read: if request.auth.uid == userId || isDoctor();
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+
+      // Apă zilnică – doar propriul user
+      match /water/{dayKey} {
+       allow read: if request.auth.uid == userId || isDoctor();
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+
+      // Somn zilnic – doar propriul user
+      match /sleep/{dayKey} {
+        allow read: if request.auth.uid == userId || isDoctor();
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      // Sub-colecția de alergii
+      match /allergies/{allergyId} {
+        // doar proprietarul poate citi și lista
+        allow list, read: if request.auth.uid == userId;
+        // doar proprietarul poate crea
+        allow create: if request.auth.uid == userId;
+        // doar proprietarul poate șterge
+        allow delete: if request.auth.uid == userId;
+        allow update: if false;
+      }
+
+      // Sub-colecția de documente de profil
+      match /profile_documents/{docId} {
+        allow read: if request.auth.uid == userId
+             || get(/databases/$(database)/documents/users/$(request.auth.uid))
+                  .data.role == 'doctor';
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      match /measurement_documents/{docId} {
+        allow read: if request.auth.uid == userId
+             || get(/databases/$(database)/documents/users/$(request.auth.uid))
+                  .data.role == 'doctor';
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      match /journal_documents/{docId} {
+        allow read: if request.auth.uid == userId
+             || get(/databases/$(database)/documents/users/$(request.auth.uid))
+                  .data.role == 'doctor';
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      match /medications/{medId} {
+        allow list, read: if request.auth.uid == userId;
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      match /fcm_tokens/{tokenId} {
+        allow get, list, read: if request.auth.uid == userId;
+        allow create, update, delete: if request.auth.uid == userId;
+      }
+      
+      match /appointments/{appointmentId} {
+        allow read: if request.auth.uid == userId;
+        allow list: if request.auth.uid == userId;
+        allow get: if request.auth.uid == userId;
+        allow create: if request.auth.uid == userId;
+        allow delete: if request.auth.uid == userId;
+        allow update: if request.auth.uid == userId;
+      }
+      
+      // “Appointments by day” (doctor’s calendar)
+      match /appointments_by_day/{day} {
+        allow read: if request.auth.uid == userId || isPatientOf(userId);
+
+        match /slots/{slotId} {
+          allow create: if
+            request.auth.uid == request.resource.data.patientId
+            && request.resource.data.doctorId == userId;
+
+          allow read: if
+            request.auth.uid == resource.data.patientId
+            || request.auth.uid == userId
+            || isDoctor()
+            || isPatientOf(userId);
+            
+          allow list: if request.auth.uid != null;
+            
+          allow get: if
+            request.auth.uid == resource.data.doctorId
+            || resource.data.patientId == request.auth.uid;
+            
+          allow delete: if
+            request.auth.uid == resource.data.patientId
+            || request.auth.uid == userId;
+
+          allow update: if
+            request.auth.uid == resource.data.patientId
+            // nu schimbăm doctorId sau patientId
+            && request.resource.data.doctorId == resource.data.doctorId
+            && request.resource.data.patientId == resource.data.patientId
+            // numai câmpul "description"
+            && request.writeFields.hasOnly(['description','dateTime']);
+        }
+      }
+    }
+    
+    // Regulile pentru chat_rooms
+    match /chat_rooms/{roomId} {
+      allow create: if request.auth != null 
+      							&& request.auth.uid == request.resource.data.createdBy
+                    && request.resource.data.participants is list
+                    && request.auth.uid in request.resource.data.participants
+                    && request.resource.data.participants.size() == 2;
+
+      // doar participanții pot lista camerele
+      allow list: if request.auth != null 
+                   	// obligăm clientul să filtreze după propriul uid
+                    && request.query.where('participants', 'array-contains', request.auth.uid)
+                    // și să ordoneze după lastMessageAt (exact ca în cod)
+                    && request.query.orderBy('lastMessageAt', 'desc');
+      
+      allow read: if request.auth != null 
+                   && request.auth.uid in resource.data.participants;
+      
+      allow get: if request.auth != null 
+                   && request.auth.uid in resource.data.participants;
+      
+      allow delete: if false; 
+        
+      allow update: if request.auth != null
+                && request.auth.uid in resource.data.participants
+                // nu lăsăm clientul să modifice alte câmpuri
+                && request.writeFields.hasOnly([
+                    "lastRead." + request.auth.uid,
+                    "lastMessageAt"
+                  ]);
+        
+      // sub-colecția de mesaje
+      match /messages/{messageId} {
+        // oricine participant poate crea
+        allow create: if request.auth != null
+                    && request.auth.uid in 
+                         get(/databases/$(database)/documents/chat_rooms/$(roomId))
+                           .data.participants;
+                           
+        // oricine participant poate citi
+        allow read: if request.auth != null
+                    && request.auth.uid in 
+                         get(/databases/$(database)/documents/chat_rooms/$(roomId))
+                           .data.participants;
+                           
+        allow list: if request.auth != null
+          && request.auth.uid in
+            get(/databases/$(database)/documents/chat_rooms/$(roomId))
+              .data.participants
+          && (request.method == 'list'
+              ? request.query.orderBy('timestamp', 'asc')
+              : true);
+              
+        allow get: if request.auth != null
+          && request.auth.uid in
+            get(/databases/$(database)/documents/chat_rooms/$(roomId))
+              .data.participants
+          && (request.method == 'list'
+              ? request.query.orderBy('timestamp', 'asc')
+              : true);
+                           
+        // doar expeditorul poate şterge
+        allow delete: if request.auth != null 
+        								&& request.auth.uid == resource.data.senderId;
+        
+        //nimeni nu poate actualiza
+        allow update: if false;
+      }
+    }
+  }
+}

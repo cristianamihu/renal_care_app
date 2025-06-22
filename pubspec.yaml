@@ -40,6 +40,9 @@ dependencies:
   firebase_core: ^3.13.0
   # Database
   cloud_firestore: ^5.6.4
+
+  cloud_functions: ^5.5.0
+
   # gestionarea starii si separarea logicii
   flutter_riverpod: ^2.6.1
   # pentru stocare fișiere

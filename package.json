@@ -1,0 +1,24 @@
+{
+  "name": "renal_care_app",
+  "version": "1.0.0",
+  "description": "![Flutter](https://img.shields.io/badge/Flutter-3.29.2-blue?logo=flutter)\r ![Dart](https://img.shields.io/badge/Dart-3.7.2-blue?logo=dart)\r ![Firestore](https://img.shields.io/badge/Firebase-Firestore-orange?logo=firebase)\r ![Platform](https://img.shields.io/badge/Platform-Android-brightgreen?logo=android)",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "emulators": "firebase emulators:start --only firestore",
+    "test:rules": "firebase emulators:exec --only firestore \"mocha --exit firestore.test.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.9.1",
+    "firebase-admin": "^13.4.0",
+    "mocha": "^11.7.0"
+  }
+}
