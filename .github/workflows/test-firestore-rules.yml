@@ -21,6 +21,5 @@ jobs:
         run: npm ci
 
       - name: Pornire emulator & rulare teste
-        # folosește ``--only firestore`` dacă vrei doar emulatorul Firestore
-        run: |
-          npx firebase emulators:exec --only firestore "npm run test:rules"
+        run: npm run test:rules
+          # npx firebase emulators:exec --only firestore "npm run test:rules"
