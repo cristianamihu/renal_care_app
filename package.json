@@ -19,6 +19,7 @@
     "@firebase/rules-unit-testing": "^4.0.1",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
+    "firebase-tools": "^11.18.0",
     "mocha": "^11.7.0"
   }
 }
